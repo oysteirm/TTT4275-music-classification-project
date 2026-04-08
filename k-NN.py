@@ -96,5 +96,3 @@ print("Confusion matrix:\n", cm)
 
 plot_confusion_matrix(cm, labels, "Confusion Matrix for k-NN (k=5)")
 
-
-
