@@ -33,6 +33,7 @@ metal_data = np.array(metal_data)
 disco_data = np.array(disco_data)
 classical_data = np.array(classical_data)
 
+"""
 # --- First plot: feature 0 vs feature 1 ---
 plt.figure()
 plt.scatter(pop_data[:,0], pop_data[:,1], color='red', label='Pop')
@@ -65,5 +66,34 @@ plt.xlabel(features[0])
 plt.ylabel(features[3])
 plt.grid(True)
 plt.legend()
+"""
+
+plt.figure()
+plt.hist(pop_data[:,0], alpha = 0.5)
+plt.hist(metal_data[:,0], alpha = 0.5)
+plt.hist(disco_data[:,0], alpha = 0.5)
+plt.hist(classical_data[:,0], alpha = 0.5)
+plt.title(features[0])
+
+plt.figure()
+plt.hist(pop_data[:,1], alpha = 0.5)
+plt.hist(metal_data[:,1], alpha = 0.5)
+plt.hist(disco_data[:,1], alpha = 0.5)
+plt.hist(classical_data[:,1], alpha = 0.5)
+plt.title(features[1])
+
+plt.figure()
+plt.hist(pop_data[:,2], alpha = 0.5)
+plt.hist(metal_data[:,2], alpha = 0.5)
+plt.hist(disco_data[:,2], alpha = 0.5)
+plt.hist(classical_data[:,2], alpha = 0.5)
+plt.title(features[2])
+
+plt.figure()
+plt.hist(pop_data[:,3], alpha = 0.5)
+plt.hist(metal_data[:,3], alpha = 0.5)
+plt.hist(disco_data[:,3], alpha = 0.5)
+plt.hist(classical_data[:,3], alpha = 0.5)
+plt.title(features[3])
 
 plt.show()
