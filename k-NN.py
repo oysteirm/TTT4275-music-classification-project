@@ -17,7 +17,7 @@ features = [
         "tempo"
         ]
 
-output = data_to_array("../data/GenreClassData_30s.txt", features, True, True)
+output = data_to_array("data/GenreClassData_30s.txt", features, True, True)
 
 print(output)
 
