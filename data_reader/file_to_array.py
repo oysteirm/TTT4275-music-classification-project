@@ -2,37 +2,48 @@ import numpy as np
 import pandas as pd
 
 def data_to_array(file_path, feature_cols, label_col=None, include_track_id=False):
-    """
-    Reads dataset and returns numpy arrays.
 
-    Parameters:
-        file_path (str): path to .txt/.csv file
-        feature_cols (list): list of column names to use as features
-        label_col (str, optional): column name for labels
-
-    Returns:
-        X (np.ndarray): shape [n_samples, n_features]
-        y (np.ndarray, optional): shape [n_samples]
-    """
-    # Read file (works for both .txt and .csv)
     df = pd.read_csv(file_path, sep="\t")
 
-
-    # Extract features
+    # Features
     X = df[feature_cols].values
+    print(len(X))
+    # Optional outputs
+    y = df[label_col].values if label_col else None
+    track_id = df["Track ID"].values if include_track_id else None
 
-    outputs = [X]
+    train_test_split = 792
+    max_idx = len(X)
 
-    if label_col:
-        y = df[label_col].values
-        outputs.append(y)
+    # --- SPLIT ---
+    X_train = X[:train_test_split]
+    X_test = X[train_test_split:max_idx]
 
-    if include_track_id:
-        track_id = df["Track ID"].values
-        outputs.append(track_id)
+    outputs_train = [X_train]
+    outputs_test = [X_test]
 
-    return outputs
+    if y is not None:
+        y_train = y[:train_test_split]
+        y_test = y[train_test_split:max_idx]
+        outputs_train.append(y_train)
+        outputs_test.append(y_test)
 
+    if track_id is not None:
+        id_train = track_id[:train_test_split]
+        id_test = track_id[train_test_split:max_idx]
+        outputs_train.append(id_train)
+        outputs_test.append(id_test)
+
+    return tuple(outputs_train), tuple(outputs_test)
+
+def normalize_standard(X):
+    mean = X.mean(axis=0)
+    std = X.std(axis=0)
+
+    # avoid division by zero
+    std[std == 0] = 1
+
+    return (X - mean) / std
 
 features = [
     # zero crossing
@@ -116,6 +127,16 @@ features = [
 ]
 
 
-ar = data_to_array("../data/GenreClassData_30s.txt", features)
+train, test = data_to_array(
+    "../data/GenreClassData_30s.txt",
+    features,
+    label_col="GenreID",
+    include_track_id=True
+)
 
-print(ar)
+# train and test on this form
+# [[data_from_features], [GenreID], [Track ID]]
+
+# normalize using std deaviation and mean
+X_train_norm = normalize_standard(train[0])
+X_test_norm = normalize_standard(test[0])
