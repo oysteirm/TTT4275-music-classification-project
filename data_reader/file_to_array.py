@@ -1,6 +1,15 @@
 import numpy as np
 import pandas as pd
 
+def normalize_standard(X):
+    mean = X.mean(axis=0)
+    std = X.std(axis=0)
+
+    # avoid division by zero
+    std[std == 0] = 1
+
+    return (X - mean) / std
+
 def data_to_array(file_path, feature_cols, label_col=None, include_track_id=False):
 
     df = pd.read_csv(file_path, sep="\t")
@@ -34,16 +43,12 @@ def data_to_array(file_path, feature_cols, label_col=None, include_track_id=Fals
         outputs_train.append(id_train)
         outputs_test.append(id_test)
 
+    # Normalize the data points
+    outputs_train[0] = normalize_standard(outputs_train[0])
+    outputs_test[0] = normalize_standard(outputs_test[0])
+
     return tuple(outputs_train), tuple(outputs_test)
 
-def normalize_standard(X):
-    mean = X.mean(axis=0)
-    std = X.std(axis=0)
-
-    # avoid division by zero
-    std[std == 0] = 1
-
-    return (X - mean) / std
 
 features = [
     # zero crossing
@@ -137,6 +142,4 @@ train, test = data_to_array(
 # train and test on this form
 # [[data_from_features], [GenreID], [Track ID]]
 
-# normalize using std deaviation and mean
-X_train_norm = normalize_standard(train[0])
-X_test_norm = normalize_standard(test[0])
+print(test[0])
