@@ -16,7 +16,6 @@ def data_to_array(file_path, feature_cols, label_col=None, include_track_id=Fals
 
     # Features
     X = df[feature_cols].values
-    print(len(X))
     # Optional outputs
     y = df[label_col].values if label_col else None
     track_id = df["Track ID"].values if include_track_id else None
