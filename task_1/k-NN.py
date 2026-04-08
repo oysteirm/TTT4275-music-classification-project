@@ -9,6 +9,7 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
+from file_to_array import train, test, features
 
 k = 5
 
@@ -83,8 +84,8 @@ def plot_confusion_matrix(cm, labels, title):
     plt.show()
 
 
-train_set = 
-test_set = 
+train_set = train
+test_set = test
 error_rate, cm, labels, predictions = evaluating_k_NN_classifier(train_set, test_set, k)
 
 accuracy = 1 - error_rate
