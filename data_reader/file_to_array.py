@@ -136,10 +136,7 @@ train, test = data_to_array(
     "../data/GenreClassData_30s.txt",
     features,
     label_col="GenreID",
-    include_track_id=True
-)
+    include_track_id=True)
 
 # train and test on this form
 # [[data_from_features], [GenreID], [Track ID]]
-
-print(test[0])
