@@ -1,33 +1,33 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from file_to_array import train, test, features
+from file_to_array import train_30s, test_30s, features
 
 pop_data = []
 metal_data = []
 disco_data = []
 classical_data = []
 
-for i in range(len(train[1])):
-    if train[1][i] == 0:
-        pop_data.append(train[0][i])
-    elif train[1][i] == 1:
-        metal_data.append(train[0][i])
-    elif train[1][i] == 2:
-        disco_data.append(train[0][i])
-    elif train[1][i] == 5:
-        classical_data.append(train[0][i])
+for i in range(len(train_30s[1])):
+    if train_30s[1][i] == 0:
+        pop_data.append(train_30s[0][i])
+    elif train_30s[1][i] == 1:
+        metal_data.append(train_30s[0][i])
+    elif train_30s[1][i] == 2:
+        disco_data.append(train_30s[0][i])
+    elif train_30s[1][i] == 5:
+        classical_data.append(train_30s[0][i])
 
-for i in range(len(test[1])):
-    if test[1][i] == 0:
-        pop_data.append(test[0][i])
-    elif test[1][i] == 1:
-        metal_data.append(test[0][i])
-    elif test[1][i] == 2:
-        disco_data.append(test[0][i])
-    elif test[1][i] == 5:
-        classical_data.append(test[0][i])
+for i in range(len(test_30s[1])):
+    if test_30s[1][i] == 0:
+        pop_data.append(test_30s[0][i])
+    elif test_30s[1][i] == 1:
+        metal_data.append(test_30s[0][i])
+    elif test_30s[1][i] == 2:
+        disco_data.append(test_30s[0][i])
+    elif test_30s[1][i] == 5:
+        classical_data.append(test_30s[0][i])
 
-# Convert your class data lists to arrays for easy slicing
+
 pop_data = np.array(pop_data)
 metal_data = np.array(metal_data)
 disco_data = np.array(disco_data)
