@@ -1,15 +1,13 @@
-#Task 1: k-NN classifier 
-# - Design a k -NN classifier (k =5) for all ten genres using only the following four features; 
-#       spectral rolloff mean, mfcc 1 mean, spectral centroid mean and tempo.
-# - Evaluate the performance of the classification mode
-
+#Task 3: k-NN classifier with new feature
+#- Design a k-NN classifier (k=5) for all ten genres using only four features with at least three features being; 
+#       spectral rolloff mean, mfcc 1 mean, spectral centroid mean or tempo. Motivate why you selected the particular four features.
 
 import numpy as np
 from collections import Counter
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
-from file_to_array import train, test
+from file_to_array import train, test, features
 
 def k_NN_classifier(train_set,test_set,k):
     
@@ -78,9 +76,9 @@ error_rate, cm, labels, predictions = evaluating_k_NN_classifier(train, test, k)
 
 accuracy = 1 - error_rate
 
-print("Error rate:", error_rate)
+#print("Error rate:", error_rate)
 print("Accuracy:", accuracy)
 #print("Labels:", labels)
 #print("Confusion matrix:\n", cm)
-plot_confusion_matrix(cm, labels, "Confusion Matrix for k-NN (k=5)")
-
+#plot_confusion_matrix(cm, labels, "Confusion Matrix for k-NN (k=5)")
+print(features)
