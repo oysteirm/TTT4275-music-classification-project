@@ -70,7 +70,7 @@ def plot_confusion_matrix(cm, labels, title):
     plt.title(title)
     plt.show()
 
-k = 1
+k = 5
 
 error_rate, cm, labels, predictions = evaluating_k_NN_classifier(train, test, k)
 
