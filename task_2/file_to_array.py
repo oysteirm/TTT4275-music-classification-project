@@ -1,6 +1,10 @@
 import numpy as np
 import pandas as pd
 
+#Example of usage
+#outputs_train[0] = normalize_standard(outputs_train[0])
+#outputs_test[0] = normalize_standard(outputs_test[0])
+
 def normalize_standard(X):
     mean = X.mean(axis=0)
     std = X.std(axis=0)
@@ -48,10 +52,6 @@ def data_to_array_30s(file_path, feature_cols, label_col=None, include_track_id=
         outputs_train.append(id_train)
         outputs_test.append(id_test)
 
-    # # Normalize the data points
-    outputs_train[0] = normalize_standard(outputs_train[0])
-    outputs_test[0] = normalize_standard(outputs_test[0])
-
     return tuple(outputs_train), tuple(outputs_test)
 
 
@@ -85,10 +85,6 @@ def data_to_array_10s(file_path, feature_cols, label_col=None, include_track_id=
         id_test = track_id[train_test_split:max_idx]
         outputs_train.append(id_train)
         outputs_test.append(id_test)
-
-    # Normalize the data points
-    outputs_train[0] = normalize_standard(outputs_train[0])
-    outputs_test[0] = normalize_standard(outputs_test[0])
 
     return tuple(outputs_train), tuple(outputs_test)
 
@@ -124,10 +120,6 @@ def data_to_array_5s(file_path, feature_cols, label_col=None, include_track_id=F
         id_test = track_id[train_test_split:max_idx]
         outputs_train.append(id_train)
         outputs_test.append(id_test)
-
-    # Normalize the data points
-    outputs_train[0] = normalize_standard(outputs_train[0])
-    outputs_test[0] = normalize_standard(outputs_test[0])
 
     return tuple(outputs_train), tuple(outputs_test)
 
@@ -213,7 +205,6 @@ features = [
 #    "mfcc_12_std",
 ]
 
-
 train_30s, test_30s = data_to_array_30s(
     "../data/GenreClassData_30s.txt",
     features,
@@ -238,3 +229,5 @@ train_5s, test_5s = data_to_array_5s(
 )
 
 cov_matrix_30s = np.cov(train_30s[0], rowvar=False)
+cov_matrix_10s = np.cov(train_10s[0], rowvar=False)
+cov_matrix_5s = np.cov(train_5s[0], rowvar=False)
