@@ -81,5 +81,5 @@ print("Error rate:", error_rate)
 print("Accuracy:", accuracy)
 #print("Labels:", labels)
 #print("Confusion matrix:\n", cm)
-plot_confusion_matrix(cm, labels, "Confusion Matrix for k-NN (k=5)")
+plot_confusion_matrix(cm, labels, f"Confusion Matrix for k-NN (k={k})")
 
