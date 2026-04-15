@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from file_to_array import train_30s, test_30s, features
+from file_to_array import train_30s, features
 
 pop_data = []
 metal_data = []
@@ -16,17 +16,6 @@ for i in range(len(train_30s[1])):
         disco_data.append(train_30s[0][i])
     elif train_30s[1][i] == 5:
         classical_data.append(train_30s[0][i])
-
-for i in range(len(test_30s[1])):
-    if test_30s[1][i] == 0:
-        pop_data.append(test_30s[0][i])
-    elif test_30s[1][i] == 1:
-        metal_data.append(test_30s[0][i])
-    elif test_30s[1][i] == 2:
-        disco_data.append(test_30s[0][i])
-    elif test_30s[1][i] == 5:
-        classical_data.append(test_30s[0][i])
-
 
 pop_data = np.array(pop_data)
 metal_data = np.array(metal_data)
@@ -77,7 +66,7 @@ plt.hist(metal_data[:,0], alpha = a, label='Metal', bins = bins)
 plt.hist(disco_data[:,0], alpha = a, label='Disco', bins = bins)
 plt.hist(classical_data[:,0], alpha = a, label='Classical', bins = bins)
 plt.title(features[0])
-plt.xlabel(f"{features[0]} (normalized)")
+plt.xlabel(f"{features[0]}")
 plt.ylabel("Frequency")
 plt.legend()
 
@@ -87,7 +76,7 @@ plt.hist(metal_data[:,1], alpha = a, label='Metal', bins = bins)
 plt.hist(disco_data[:,1], alpha = a, label='Disco', bins = bins)
 plt.hist(classical_data[:,1], alpha = a, label='Classical', bins = bins)
 plt.title(features[1])
-plt.xlabel(f"{features[1]} (normalized)")
+plt.xlabel(f"{features[1]}")
 plt.ylabel("Frequency")
 plt.legend()
 
@@ -97,7 +86,7 @@ plt.hist(metal_data[:,2], alpha = a, label='Metal', bins = bins)
 plt.hist(disco_data[:,2], alpha = a, label='Disco', bins = bins)
 plt.hist(classical_data[:,2], alpha = a, label='Classical', bins = bins)
 plt.title(features[2])
-plt.xlabel(f"{features[2]} (normalized)")
+plt.xlabel(f"{features[2]}")
 plt.ylabel("Frequency")
 plt.legend()
 
@@ -107,7 +96,7 @@ plt.hist(metal_data[:,3], alpha = a, label='Metal', bins = bins)
 plt.hist(disco_data[:,3], alpha = a, label='Disco', bins = bins)
 plt.hist(classical_data[:,3], alpha = a, label='Classical', bins = bins)
 plt.title(features[3])
-plt.xlabel(f"{features[3]} (normalized)")
+plt.xlabel(f"{features[3]}")
 plt.ylabel("Frequency")
 plt.legend()
 

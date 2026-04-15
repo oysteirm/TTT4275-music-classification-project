@@ -174,7 +174,7 @@ features = [
 #    "chroma_stft_12_std",
 
     # rhythm
-#    "tempo",
+    "tempo",
 
     # mfcc mean
    "mfcc_1_mean",
@@ -194,7 +194,7 @@ features = [
 #    "mfcc_1_std",
 #    "mfcc_2_std",
 #    "mfcc_3_std",
-    "mfcc_4_std",
+#    "mfcc_4_std",
 #    "mfcc_5_std",
 #    "mfcc_6_std",
 #    "mfcc_7_std",
