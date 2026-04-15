@@ -10,6 +10,12 @@ def normalize_standard(X):
 
     return (X - mean) / std
 
+def mahalanobis_distance(x, y, cov_matrix):
+    diff = x - y
+    cov_inv = np.linalg.inv(cov_matrix)
+    d = diff.T @ cov_inv @ diff
+    return d
+
 def data_to_array_30s(file_path, feature_cols, label_col=None, include_track_id=False):
 
     df = pd.read_csv(file_path, sep="\t")
@@ -42,7 +48,7 @@ def data_to_array_30s(file_path, feature_cols, label_col=None, include_track_id=
         outputs_train.append(id_train)
         outputs_test.append(id_test)
 
-    # Normalize the data points
+    # # Normalize the data points
     outputs_train[0] = normalize_standard(outputs_train[0])
     outputs_test[0] = normalize_standard(outputs_test[0])
 
@@ -176,7 +182,7 @@ features = [
 #    "chroma_stft_12_std",
 
     # rhythm
-    "tempo",
+#    "tempo",
 
     # mfcc mean
    "mfcc_1_mean",
@@ -196,7 +202,7 @@ features = [
 #    "mfcc_1_std",
 #    "mfcc_2_std",
 #    "mfcc_3_std",
-#    "mfcc_4_std",
+    "mfcc_4_std",
 #    "mfcc_5_std",
 #    "mfcc_6_std",
 #    "mfcc_7_std",
@@ -231,5 +237,4 @@ train_5s, test_5s = data_to_array_5s(
     include_track_id=True
 )
 
-print(train_5s[1])
-print(test_5s[1])
+cov_matrix_30s = np.cov(train_30s[0], rowvar=False)
