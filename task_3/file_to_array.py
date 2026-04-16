@@ -123,7 +123,7 @@ def data_to_array_5s(file_path, feature_cols, label_col=None, include_track_id=F
 
     return tuple(outputs_train), tuple(outputs_test)
 
-def split_train_validation(data, val_ratio=0.25):
+def split_train_into_train_validation(data, val_ratio=0.25):
     X, y, track_ids = data
 
     X = np.array(X)
