@@ -123,6 +123,27 @@ def data_to_array_5s(file_path, feature_cols, label_col=None, include_track_id=F
 
     return tuple(outputs_train), tuple(outputs_test)
 
+def split_train_validation(data):
+    X, y, ids = data
+    
+    train_idx, val_idx = [], []
+    
+    for i in range(len(X)):
+        if i % 4 == 0:
+            val_idx.append(i)
+        else:
+            train_idx.append(i)
+    
+    X_train = X[train_idx]
+    y_train = y[train_idx]
+    ids_train = ids[train_idx]
+    
+    X_val = X[val_idx]
+    y_val = y[val_idx]
+    ids_val = ids[val_idx]
+    
+    return (X_train, y_train, ids_train), (X_val, y_val, ids_val)
+
 
 features = [
     # zero crossing
@@ -231,3 +252,9 @@ train_5s, test_5s = data_to_array_5s(
 cov_matrix_30s = np.cov(train_30s[0], rowvar=False)
 cov_matrix_10s = np.cov(train_10s[0], rowvar=False)
 cov_matrix_5s = np.cov(train_5s[0], rowvar=False)
+
+train_30s, validation_30s = split_train_validation(train_30s)
+train_10s, validation_10s = split_train_validation(train_10s)
+train_5s, validation_5s = split_train_validation(train_5s)
+
+        
