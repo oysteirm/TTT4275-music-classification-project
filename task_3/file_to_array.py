@@ -123,26 +123,34 @@ def data_to_array_5s(file_path, feature_cols, label_col=None, include_track_id=F
 
     return tuple(outputs_train), tuple(outputs_test)
 
-def split_train_validation(data):
-    X, y, ids = data
-    
+def split_train_validation(data, val_ratio=0.25):
+    X, y, track_ids = data
+
+    X = np.array(X)
+    y = np.array(y)
+    track_ids = np.array(track_ids)
+
     train_idx, val_idx = [], []
-    
-    for i in range(len(X)):
-        if i % 4 == 0:
-            val_idx.append(i)
-        else:
-            train_idx.append(i)
-    
-    X_train = X[train_idx]
-    y_train = y[train_idx]
-    ids_train = ids[train_idx]
-    
-    X_val = X[val_idx]
-    y_val = y[val_idx]
-    ids_val = ids[val_idx]
-    
-    return (X_train, y_train, ids_train), (X_val, y_val, ids_val)
+
+    unique_classes = np.unique(y)
+
+    for cls in unique_classes:
+        cls_indices = np.where(y == cls)[0]  
+
+        n = len(cls_indices)
+        n_val = int(n * val_ratio)
+
+        val_idx.extend(cls_indices[:n_val])          
+        train_idx.extend(cls_indices[n_val:])      
+
+    def subset(indices):
+        return (
+            X[indices],
+            y[indices],
+            track_ids[indices]
+        )
+
+    return subset(train_idx), subset(val_idx)
 
 
 features = [
