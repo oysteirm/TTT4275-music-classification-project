@@ -27,19 +27,13 @@ DISTANCE_METRIC = "mahalanobis"
 
 # Her kan du sette hvilke k-verdier som er lov å teste per kilde
 K_VALUES_PER_SOURCE = {
-    "5s": [3, 5, 7, 9, 11],
-    "10s": [3, 5, 7, 9, 11],
-    "30s": [3, 5, 7, 9,11],
+    "5s": [5, 10, 15],
+    "10s": [5, 10, 15],
+    "30s": [ 5,10,15],
 }
 
 # Hvilke kilder som skal være med i eksperimentene
 SOURCE_COMBINATIONS = [
-    ["5s"],
-    ["10s"],
-    ["30s"],
-    ["5s", "10s"],
-    ["5s", "30s"],
-    ["10s", "30s"],
     ["5s", "10s", "30s"],
 ]
 
@@ -158,8 +152,8 @@ FEATURE_POOL = [
 ]
 
 # Min og maks størrelse på feature-settene som skal genereres
-MIN_FEATURES = 10
-MAX_FEATURES = 14
+MIN_FEATURES = 1
+MAX_FEATURES = 5
 
 # Maks antall feature-sett totalt
 MAX_NUMBER_OF_FEATURE_SETS = 300
