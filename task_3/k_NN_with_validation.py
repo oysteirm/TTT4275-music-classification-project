@@ -148,13 +148,10 @@ for triple in TRIPLE_SETS:
 
         features = triple + [feature_4]
 
-        try:
-            train_set, val_set, cov = load_data(features)
-            acc = compute_accuracy(train_set, val_set, cov, K)
-            results.append((features, acc))
-            print(f"Done: {features} -> {acc:.4f}")
-        except Exception as e:
-            print(f"Failed: {features} -> {e}")
+        train_set, val_set, cov = load_data(features)
+        acc = compute_accuracy(train_set, val_set, cov, K)
+        results.append((features, acc))
+        print(f"Done: {features} -> {acc:.4f}")
 
 results.sort(key=lambda x: x[1], reverse=True)
 
