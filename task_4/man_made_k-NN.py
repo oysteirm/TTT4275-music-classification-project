@@ -131,7 +131,7 @@ MIN_FEATURES = 10
 MAX_FEATURES = 10
 
 # Max number of feature sets to test on
-MAX_NUMBER_OF_FEATURE_SETS = 50
+MAX_NUMBER_OF_FEATURE_SETS = 1
 
 #Functions start
 
@@ -335,8 +335,6 @@ def predict_for_source_combination(sources, feature_cols, k_config, train_split_
     return pd.concat(all_predictions, ignore_index=True)
 
 #voting
-def segment_level_accuracy(pred_df):
-    return 
 
 
 def majority_vote_all_segments(pred_df):
@@ -356,7 +354,7 @@ def majority_vote_all_segments(pred_df):
     track_df = pd.DataFrame(rows)
     accuracy = float((track_df["Predicted GenreID"] == track_df["True GenreID"]).mean())
 
-    return accuracy
+    return accuracy, track_df
 
 
 def majority_vote_per_source_equal(pred_df):
@@ -383,7 +381,7 @@ def majority_vote_per_source_equal(pred_df):
     track_df = pd.DataFrame(rows)
     accuracy = float((track_df["Predicted GenreID"] == track_df["True GenreID"]).mean())
 
-    return accuracy
+    return accuracy, track_df
 
 
 def majority_vote_per_source_weighted(pred_df, weights):
@@ -413,7 +411,7 @@ def majority_vote_per_source_weighted(pred_df, weights):
     track_df = pd.DataFrame(rows)
     accuracy = float((track_df["Predicted GenreID"] == track_df["True GenreID"]).mean())
 
-    return accuracy
+    return accuracy, track_df
 
 #evaluate one
 def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_config, weight_configs):
@@ -439,7 +437,7 @@ def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_con
         "Validation accuracy": seg_acc,
     })
 
-    acc_all = majority_vote_all_segments(segment_pred_df)
+    acc_all, _ = majority_vote_all_segments(segment_pred_df)
     results.append({
         "Feature set": feature_set_name,
         "Sources": "+".join(sources),
@@ -450,7 +448,7 @@ def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_con
         "Validation accuracy": acc_all,
     })
 
-    acc_equal = majority_vote_per_source_equal(segment_pred_df)
+    acc_equal, _ = majority_vote_per_source_equal(segment_pred_df)
     results.append({
         "Feature set": feature_set_name,
         "Sources": "+".join(sources),
@@ -462,7 +460,7 @@ def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_con
     })
 
     for weights in weight_configs:
-        acc_weighted = majority_vote_per_source_weighted(segment_pred_df, weights)
+        acc_weighted, _ = majority_vote_per_source_weighted(segment_pred_df, weights)
         results.append({ 
         "Feature set": feature_set_name,
         "Sources": "+".join(sources),
