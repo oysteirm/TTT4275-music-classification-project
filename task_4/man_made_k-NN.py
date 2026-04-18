@@ -105,10 +105,10 @@ ALL_FEATURES = [
 
 #features to search in
 FEATURE_POOL = [
-    "zero_cross_rate_mean",
+    #"zero_cross_rate_mean",
     #"zero_cross_rate_std",
-    #"rmse_mean",
-    #"rmse_var",
+    "rmse_mean",
+    "rmse_var",
     "spectral_centroid_mean",
     #"spectral_centroid_var",
     #"spectral_bandwidth_mean",
@@ -119,16 +119,16 @@ FEATURE_POOL = [
     #"spectral_contrast_var",
     #"spectral_flatness_mean",
     #"spectral_flatness_var",
-    #"chroma_stft_6_mean",
-    #"chroma_stft_4_std",
+    "chroma_stft_6_mean",
+    "chroma_stft_4_std",
     "tempo",
     #"mfcc_4_mean",
     #"mfcc_6_std",
 ]
 
- # feature set sizing 
+# feature set sizing 
 MIN_FEATURES = 4
-MAX_FEATURES = 4
+MAX_FEATURES = 6
 
 # Max number of feature sets to test on
 MAX_NUMBER_OF_FEATURE_SETS = 5
@@ -460,6 +460,18 @@ def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_con
         "Number of features": len(feature_cols),
         "Validation accuracy": acc_equal,
     })
+
+    for weights in weight_configs:
+        acc_weighted, _ = majority_vote_per_source_weighted(segment_pred_df, weights)
+        results.append({ 
+        "Feature set": feature_set_name,
+        "Sources": "+".join(sources),
+        "k_config": str(k_config),
+        "Method": "group_vote_weighted",
+        "Weights": str(weights),
+        "Number of features": len(feature_cols),
+        "Validation accuracy": acc_weighted,
+        })
 
     results_df = pd.DataFrame(results)
 
