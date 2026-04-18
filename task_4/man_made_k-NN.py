@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from collections import Counter
 from itertools import combinations, product
 from pathlib import Path
@@ -10,11 +8,6 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
 
-
-# =========================================================
-# 1. FILER OG HOVEDINNSTILLINGER
-# =========================================================
-
 DATA_DIR = Path("../data")
 
 DATA_FILES = {
@@ -23,49 +16,26 @@ DATA_FILES = {
     "30s": DATA_DIR / "GenreClassData_30s.txt",
 }
 
-DISTANCE_METRIC = "mahalanobis"
+DATASET_CACHE = {}
 
-# Her kan du sette hvilke k-verdier som er lov å teste per kilde
+#Testing of k values
 K_VALUES_PER_SOURCE = {
-    "5s": [3, 5, 7, 9, 11],
-    "10s": [3, 5, 7, 9, 11],
-    "30s": [3, 5, 7, 9,11],
+    "5s": [10, 15],
+    "10s": [10, 15],
+    "30s": [10, 15],
 }
 
 # Hvilke kilder som skal være med i eksperimentene
 SOURCE_COMBINATIONS = [
-    ["5s"],
-    ["10s"],
-    ["30s"],
-    ["5s", "10s"],
-    ["5s", "30s"],
-    ["10s", "30s"],
     ["5s", "10s", "30s"],
 ]
 
-# Voting-konfigurasjoner på track-nivå
 WEIGHT_CONFIGS = [
     {"5s": 1, "10s": 1, "30s": 1},
-    {"5s": 1, "10s": 1, "30s": 2},
+    # {"5s": 1, "10s": 1, "30s": 2},
     {"5s": 1, "10s": 2, "30s": 3},
-    {"5s": 1, "10s": 3, "30s": 5},
+    # {"5s": 1, "10s": 3, "30s": 5},
 ]
-
-# Hvor stor del av den opprinnelige train-delen som skal brukes som validation
-VALIDATION_RATIO = 0.20
-RANDOM_SEED = 42
-
-# Hvor filer lagres
-VALIDATION_RESULTS_CSV = "task4_validation_results.csv"
-TEST_RESULTS_CSV = "task4_test_results.csv"
-BEST_TEST_TRACK_PRED_CSV = "task4_best_test_track_predictions.csv"
-BEST_TEST_SEGMENT_PRED_CSV = "task4_best_test_segment_predictions.csv"
-BEST_TEST_CM_CSV = "task4_best_test_confusion_matrix.csv"
-
-
-# =========================================================
-# 2. FEATURE-KANDIDATER
-# =========================================================
 
 ALL_FEATURES = [
     "zero_cross_rate_mean",
@@ -133,61 +103,46 @@ ALL_FEATURES = [
     "mfcc_12_std",
 ]
 
-# Her velger du hvilket feature-område du vil søke i
+#features to search in
 FEATURE_POOL = [
     "zero_cross_rate_mean",
-    "zero_cross_rate_std",
-    "rmse_mean",
-    "rmse_var",
+    #"zero_cross_rate_std",
+    #"rmse_mean",
+    #"rmse_var",
     "spectral_centroid_mean",
-    "spectral_centroid_var",
-    "spectral_bandwidth_mean",
-    "spectral_bandwidth_var",
-    "spectral_rolloff_mean",
-    "spectral_rolloff_var",
-    "spectral_contrast_mean",
-    "spectral_contrast_var",
-    "spectral_flatness_mean",
-    "spectral_flatness_var",
-    "chroma_stft_6_mean",
-    "chroma_stft_4_std",
+    #"spectral_centroid_var",
+    #"spectral_bandwidth_mean",
+    #"spectral_bandwidth_var",
+    #"spectral_rolloff_mean",
+    #"spectral_rolloff_var",
+    #"spectral_contrast_mean",
+    #"spectral_contrast_var",
+    #"spectral_flatness_mean",
+    #"spectral_flatness_var",
+    #"chroma_stft_6_mean",
+    #"chroma_stft_4_std",
     "tempo",
-    "mfcc_4_mean",
-    "mfcc_6_std",
-
+    #"mfcc_4_mean",
+    #"mfcc_6_std",
 ]
 
-# Min og maks størrelse på feature-settene som skal genereres
-MIN_FEATURES = 10
-MAX_FEATURES = 14
+ # feature set sizing 
+MIN_FEATURES = 4
+MAX_FEATURES = 4
 
-# Maks antall feature-sett totalt
-MAX_NUMBER_OF_FEATURE_SETS = 300
+# Max number of feature sets to test on
+MAX_NUMBER_OF_FEATURE_SETS = 5
 
+#Functions start
 
-# =========================================================
-# 3. HJELPEFUNKSJONER FOR FEATURE-SETT
-# =========================================================
-
-def count_total_combinations(n: int, min_size: int, max_size: int) -> int:
+def count_total_combinations(n, min_size, max_size):
     total = 0
     for r in range(min_size, max_size + 1):
         total += math.comb(n, r)
     return total
 
-
-def generate_feature_sets(
-    feature_pool: list[str],
-    min_size: int,
-    max_size: int,
-    max_feature_sets: int,
-    random_seed: int = 42,
-) -> list[tuple[str, list[str]]]:
-    """
-    Lager feature-sett fra et feature-område.
-    Vi bruker kombinasjoner, ikke permutasjoner.
-    Hvis det finnes for mange kombinasjoner, trekkes et tilfeldig utvalg.
-    """
+#genrate random feature sets
+def generate_feature_sets(feature_pool, min_size, max_size, max_feature_sets, random_seed = 42):
     rng = random.Random(random_seed)
 
     all_feature_sets = []
@@ -225,12 +180,8 @@ def generate_feature_sets(
 
     return all_feature_sets
 
-
-# =========================================================
-# 4. DATALESING OG SPLITT
-# =========================================================
-
-def split_index_for_dataset(dataset_name: str) -> int:
+#Data reading
+def split_index_for_dataset(dataset_name):
     if dataset_name == "30s":
         return 792
     elif dataset_name == "10s":
@@ -238,85 +189,41 @@ def split_index_for_dataset(dataset_name: str) -> int:
     elif dataset_name == "5s":
         return 792 * 6
     else:
-        raise ValueError(f"Ukjent datasett: {dataset_name}")
+        return
+    
+def get_dataset(source):
+    if source not in DATASET_CACHE:
+        DATASET_CACHE[source] = pd.read_csv(DATA_FILES[source], sep="\t")
+    return DATASET_CACHE[source]
 
-
-def read_dataset(dataset_name: str, feature_cols: list[str]) -> pd.DataFrame:
-    df = pd.read_csv(DATA_FILES[dataset_name], sep="\t")
+def read_dataset(dataset_name, feature_cols):
+    df = get_dataset(dataset_name)
     keep_cols = ["Track ID", "GenreID"] + feature_cols
     df = df[keep_cols].copy()
     df["source"] = dataset_name
     return df
 
 
-def get_original_train_test_track_ids() -> tuple[list[int], list[int]]:
-    """
-    Bruker den opprinnelige 30s-filen for å definere train/test track IDs.
-    """
+def get_original_train_test_track_ids():
     df_30 = pd.read_csv(DATA_FILES["30s"], sep="\t")
     split_idx = split_index_for_dataset("30s")
 
     original_train_ids = df_30.iloc[:split_idx]["Track ID"].tolist()
     original_test_ids = df_30.iloc[split_idx:]["Track ID"].tolist()
 
-    overlap = set(original_train_ids).intersection(set(original_test_ids))
-    if overlap:
-        raise ValueError("Noen Track ID-er finnes i både opprinnelig train og test.")
-
     return original_train_ids, original_test_ids
 
-
-def split_train_into_train_and_validation(
-    original_train_ids: list[int],
-    validation_ratio: float,
-    random_seed: int,
-) -> tuple[set[int], set[int]]:
-    """
-    Deler den opprinnelige train-delen i:
-    - ny train
-    - validation
-    """
-    rng = random.Random(random_seed)
-
-    unique_ids = list(original_train_ids)
-    rng.shuffle(unique_ids)
-
-    n_val = int(len(unique_ids) * validation_ratio)
-
-    validation_ids = set(unique_ids[:n_val])
-    train_ids = set(unique_ids[n_val:])
-
-    if len(train_ids.intersection(validation_ids)) > 0:
-        raise ValueError("Overlap mellom train og validation.")
-
-    return train_ids, validation_ids
-
-
-def get_all_splits() -> tuple[set[int], set[int], set[int]]:
+def get_all_splits():
     original_train_ids, original_test_ids = get_original_train_test_track_ids()
-    train_ids, validation_ids = split_train_into_train_and_validation(
-        original_train_ids=original_train_ids,
-        validation_ratio=VALIDATION_RATIO,
-        random_seed=RANDOM_SEED,
-    )
-    test_ids = set(original_test_ids)
 
-    if len(train_ids.intersection(test_ids)) > 0:
-        raise ValueError("Overlap mellom train og test.")
-    if len(validation_ids.intersection(test_ids)) > 0:
-        raise ValueError("Overlap mellom validation og test.")
+    validation_ids = set(original_train_ids[::4])
+    train_ids = set(id for id in original_train_ids if id not in validation_ids)
+    test_ids = set(original_test_ids)
 
     return train_ids, validation_ids, test_ids
 
 
-def load_data_for_split(
-    sources: list[str],
-    feature_cols: list[str],
-    split_name: str,
-) -> pd.DataFrame:
-    """
-    split_name kan være 'train', 'validation', 'test', eller 'train_plus_validation'
-    """
+def load_data_for_split(sources ,feature_cols, split_name):
     train_ids, validation_ids, test_ids = get_all_splits()
 
     if split_name == "train":
@@ -327,8 +234,6 @@ def load_data_for_split(
         selected_ids = test_ids
     elif split_name == "train_plus_validation":
         selected_ids = train_ids.union(validation_ids)
-    else:
-        raise ValueError(f"Ukjent split_name: {split_name}")
 
     dfs = []
     for source in sources:
@@ -338,19 +243,8 @@ def load_data_for_split(
 
     return pd.concat(dfs, ignore_index=True)
 
-
-# =========================================================
-# 5. STANDARDISERING OG AVSTAND
-# =========================================================
-
-def standardize_using_reference(
-    reference_df: pd.DataFrame,
-    target_df: pd.DataFrame,
-    feature_cols: list[str],
-) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Standardiserer target basert på statistikk fra reference_df.
-    """
+#standization 
+def standardize_using_reference(reference_df, target_df, feature_cols):
     X_ref = reference_df[feature_cols].to_numpy(dtype=float)
     X_target = target_df[feature_cols].to_numpy(dtype=float)
 
@@ -364,49 +258,24 @@ def standardize_using_reference(
     return X_ref_std, X_target_std
 
 
-def compute_inverse_covariance(X_train: np.ndarray) -> np.ndarray:
+def compute_inverse_covariance(X_train):
     cov = np.cov(X_train, rowvar=False)
     if np.ndim(cov) == 0:
         cov = np.array([[cov]])
     return np.linalg.pinv(cov)
 
 
-def compute_distances_to_train(
-    x_test: np.ndarray,
-    X_train: np.ndarray,
-    metric: str,
-    cov_inv: np.ndarray | None,
-) -> np.ndarray:
-    if metric == "euclidean":
-        return np.linalg.norm(X_train - x_test, axis=1)
-
-    if metric == "mahalanobis":
-        diffs = X_train - x_test
-        return np.einsum("ij,jk,ik->i", diffs, cov_inv, diffs)
-
-    raise ValueError(f"Ukjent metric: {metric}")
+def compute_distances_to_train(x_test, X_train, cov_inv):
+    diffs = X_train - x_test
+    return np.sum(diffs @ cov_inv * diffs, axis=1)
 
 
-def predict_knn(
-    X_train: np.ndarray,
-    y_train: np.ndarray,
-    X_eval: np.ndarray,
-    k: int,
-    metric: str,
-) -> np.ndarray:
+def predict_knn(X_train, y_train, X_eval, k):
     predictions = []
-
-    cov_inv = None
-    if metric == "mahalanobis":
-        cov_inv = compute_inverse_covariance(X_train)
+    cov_inv = compute_inverse_covariance(X_train)
 
     for x_test in X_eval:
-        distances = compute_distances_to_train(
-            x_test=x_test,
-            X_train=X_train,
-            metric=metric,
-            cov_inv=cov_inv,
-        )
+        distances = compute_distances_to_train(x_test=x_test, X_train=X_train, cov_inv=cov_inv)
 
         nearest_idx = np.argsort(distances)[:k]
         nearest_labels = y_train[nearest_idx]
@@ -415,22 +284,9 @@ def predict_knn(
 
     return np.array(predictions)
 
+#Predictrions
 
-# =========================================================
-# 6. PREDIKSJON PER KILDE
-# =========================================================
-
-def predict_for_one_source(
-    source: str,
-    feature_cols: list[str],
-    k: int,
-    metric: str,
-    train_split_name: str,
-    eval_split_name: str,
-) -> pd.DataFrame:
-    """
-    Trener og evaluerer for én kilde, f.eks. bare 5s eller bare 30s.
-    """
+def predict_for_one_source(source, feature_cols, k, train_split_name, eval_split_name):
     train_df = load_data_for_split(
         sources=[source],
         feature_cols=feature_cols,
@@ -454,9 +310,7 @@ def predict_for_one_source(
         X_train=X_train,
         y_train=y_train,
         X_eval=X_eval,
-        k=k,
-        metric=metric,
-    )
+        k=k)
 
     out_df = eval_df[["Track ID", "GenreID", "source"]].copy()
     out_df.rename(columns={"GenreID": "True GenreID"}, inplace=True)
@@ -465,18 +319,7 @@ def predict_for_one_source(
     return out_df
 
 
-def predict_for_source_combination(
-    sources: list[str],
-    feature_cols: list[str],
-    k_config: dict[str, int],
-    metric: str,
-    train_split_name: str,
-    eval_split_name: str,
-) -> pd.DataFrame:
-    """
-    Lager segmentprediksjoner for alle valgte kilder.
-    Hver kilde får sin egen k-verdi.
-    """
+def predict_for_source_combination(sources, feature_cols, k_config, train_split_name, eval_split_name):
     all_predictions = []
 
     for source in sources:
@@ -484,7 +327,6 @@ def predict_for_source_combination(
             source=source,
             feature_cols=feature_cols,
             k=k_config[source],
-            metric=metric,
             train_split_name=train_split_name,
             eval_split_name=eval_split_name,
         )
@@ -492,16 +334,12 @@ def predict_for_source_combination(
 
     return pd.concat(all_predictions, ignore_index=True)
 
-
-# =========================================================
-# 7. AGGREGERING FRA SEGMENT TIL TRACK
-# =========================================================
-
-def segment_level_accuracy(pred_df: pd.DataFrame) -> float:
+#voting
+def segment_level_accuracy(pred_df):
     return float((pred_df["Predicted GenreID"] == pred_df["True GenreID"]).mean())
 
 
-def majority_vote_all_segments(pred_df: pd.DataFrame) -> tuple[float, pd.DataFrame]:
+def majority_vote_all_segments(pred_df):
     rows = []
 
     for track_id, group in pred_df.groupby("Track ID"):
@@ -521,7 +359,7 @@ def majority_vote_all_segments(pred_df: pd.DataFrame) -> tuple[float, pd.DataFra
     return accuracy, track_df
 
 
-def majority_vote_per_source_equal(pred_df: pd.DataFrame) -> tuple[float, pd.DataFrame]:
+def majority_vote_per_source_equal(pred_df):
     rows = []
 
     for track_id, track_group in pred_df.groupby("Track ID"):
@@ -548,10 +386,7 @@ def majority_vote_per_source_equal(pred_df: pd.DataFrame) -> tuple[float, pd.Dat
     return accuracy, track_df
 
 
-def majority_vote_per_source_weighted(
-    pred_df: pd.DataFrame,
-    weights: dict[str, int],
-) -> tuple[float, pd.DataFrame]:
+def majority_vote_per_source_weighted(pred_df, weights):
     rows = []
 
     for track_id, track_group in pred_df.groupby("Track ID"):
@@ -580,27 +415,13 @@ def majority_vote_per_source_weighted(
 
     return accuracy, track_df
 
+#evaluate one
+def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_config, weight_configs):
 
-# =========================================================
-# 8. EVALUERING AV ETT OPPSETT PÅ VALIDATION
-# =========================================================
-
-def evaluate_one_validation_setup(
-    feature_set_name: str,
-    feature_cols: list[str],
-    sources: list[str],
-    k_config: dict[str, int],
-    metric: str,
-    weight_configs: list[dict[str, int]],
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, list[tuple[dict[str, int], float, pd.DataFrame]]]:
-    """
-    Trener på train og evaluerer på validation.
-    """
     segment_pred_df = predict_for_source_combination(
         sources=sources,
         feature_cols=feature_cols,
         k_config=k_config,
-        metric=metric,
         train_split_name="train",
         eval_split_name="validation",
     )
@@ -612,7 +433,6 @@ def evaluate_one_validation_setup(
         "Feature set": feature_set_name,
         "Sources": "+".join(sources),
         "k_config": str(k_config),
-        "Metric": metric,
         "Method": "segment_level",
         "Weights": "",
         "Number of features": len(feature_cols),
@@ -624,7 +444,6 @@ def evaluate_one_validation_setup(
         "Feature set": feature_set_name,
         "Sources": "+".join(sources),
         "k_config": str(k_config),
-        "Metric": metric,
         "Method": "majority_all_segments",
         "Weights": "",
         "Number of features": len(feature_cols),
@@ -636,55 +455,25 @@ def evaluate_one_validation_setup(
         "Feature set": feature_set_name,
         "Sources": "+".join(sources),
         "k_config": str(k_config),
-        "Metric": metric,
         "Method": "group_vote_equal",
         "Weights": "",
         "Number of features": len(feature_cols),
         "Validation accuracy": acc_equal,
     })
 
-    weighted_outputs = []
-    for weights in weight_configs:
-        acc_weighted, track_df_weighted = majority_vote_per_source_weighted(segment_pred_df, weights)
-
-        results.append({
-            "Feature set": feature_set_name,
-            "Sources": "+".join(sources),
-            "k_config": str(k_config),
-            "Metric": metric,
-            "Method": "group_vote_weighted",
-            "Weights": str(weights),
-            "Number of features": len(feature_cols),
-            "Validation accuracy": acc_weighted,
-        })
-
-        weighted_outputs.append((weights, acc_weighted, track_df_weighted))
-
     results_df = pd.DataFrame(results)
 
-    return results_df, segment_pred_df, track_df_all, track_df_equal, weighted_outputs
+    return results_df
+
+#evaluate all
 
 
-# =========================================================
-# 9. EVALUERING AV BESTE MODELL PÅ TEST
-# =========================================================
+def evaluate_best_setup_on_test(feature_cols, sources, k_config, method, weights_str):
 
-def evaluate_best_setup_on_test(
-    feature_cols: list[str],
-    sources: list[str],
-    k_config: dict[str, int],
-    metric: str,
-    method: str,
-    weights_str: str,
-) -> tuple[pd.DataFrame, pd.DataFrame, float]:
-    """
-    Trener på train+validation og evaluerer på test.
-    """
     segment_pred_df = predict_for_source_combination(
         sources=sources,
         feature_cols=feature_cols,
         k_config=k_config,
-        metric=metric,
         train_split_name="train_plus_validation",
         eval_split_name="test",
     )
@@ -703,13 +492,10 @@ def evaluate_best_setup_on_test(
         weights = eval(weights_str)
         acc, track_df = majority_vote_per_source_weighted(segment_pred_df, weights)
 
-    else:
-        raise ValueError(f"Ukjent method: {method}")
-
     return segment_pred_df, track_df, acc
 
 
-def make_confusion_matrix_df(track_df: pd.DataFrame) -> pd.DataFrame:
+def make_confusion_matrix_df(track_df):
     labels = sorted(track_df["True GenreID"].unique())
 
     cm = confusion_matrix(
@@ -724,22 +510,9 @@ def make_confusion_matrix_df(track_df: pd.DataFrame) -> pd.DataFrame:
         columns=[f"pred_{label}" for label in labels],
     )
 
+#make k konfigs
+def generate_k_configs_for_sources(sources, k_values_per_source):
 
-# =========================================================
-# 10. GENERERING AV k-KONFIGURASJONER
-# =========================================================
-
-def generate_k_configs_for_sources(
-    sources: list[str],
-    k_values_per_source: dict[str, list[int]],
-) -> list[dict[str, int]]:
-    """
-    Lager alle kombinasjoner av k-verdier for de valgte kildene.
-    Eksempel:
-    sources = ["5s", "30s"]
-    kan gi:
-    {"5s":3, "30s":1}, {"5s":3, "30s":3}, ...
-    """
     value_lists = [k_values_per_source[source] for source in sources]
 
     k_configs = []
@@ -751,16 +524,11 @@ def generate_k_configs_for_sources(
 
     return k_configs
 
+#main
 
-# =========================================================
-# 11. HOVEDPROGRAM
-# =========================================================
 
 if __name__ == "__main__":
     print("\nStarter oppgave 4-eksperimenter")
-    print(f"Avstandsmetode: {DISTANCE_METRIC}")
-    print(f"Validation-ratio: {VALIDATION_RATIO}")
-    print(f"Random seed: {RANDOM_SEED}")
     print()
 
     train_ids, validation_ids, test_ids = get_all_splits()
@@ -775,14 +543,12 @@ if __name__ == "__main__":
         min_size=MIN_FEATURES,
         max_size=MAX_FEATURES,
         max_feature_sets=MAX_NUMBER_OF_FEATURE_SETS,
-        random_seed=RANDOM_SEED,
     )
 
     print(f"Antall feature-sett som faktisk testes: {len(feature_sets)}")
     print()
 
     all_validation_results = []
-    saved_validation_runs = []
 
     experiment_counter = 0
 
@@ -802,15 +568,13 @@ if __name__ == "__main__":
                 print(f"Antall features: {len(feature_cols)}")
                 print(f"Sources      : {sources}")
                 print(f"k per source : {k_config}")
-                print(f"Metric       : {DISTANCE_METRIC}")
                 print("Trener på TRAIN, evaluerer på VALIDATION")
 
-                results_df, segment_pred_df, track_df_all, track_df_equal, weighted_outputs = evaluate_one_validation_setup(
+                results_df = evaluate_one_validation_setup(
                     feature_set_name=feature_set_name,
                     feature_cols=feature_cols,
                     sources=sources,
                     k_config=k_config,
-                    metric=DISTANCE_METRIC,
                     weight_configs=WEIGHT_CONFIGS,
                 )
 
@@ -820,16 +584,6 @@ if __name__ == "__main__":
 
                 all_validation_results.append(results_df)
 
-                saved_validation_runs.append({
-                    "feature_set_name": feature_set_name,
-                    "feature_cols": feature_cols,
-                    "sources": sources,
-                    "k_config": k_config,
-                    "segment_pred_df": segment_pred_df,
-                    "track_df_all": track_df_all,
-                    "track_df_equal": track_df_equal,
-                    "weighted_outputs": weighted_outputs,
-                })
 
     validation_results_df = pd.concat(all_validation_results, ignore_index=True)
     validation_results_df = validation_results_df.sort_values(
@@ -837,7 +591,6 @@ if __name__ == "__main__":
         ascending=False
     ).reset_index(drop=True)
 
-    validation_results_df.to_csv(VALIDATION_RESULTS_CSV, index=False)
 
     print("\nBeste oppsett på validation:")
     print(validation_results_df.head(20).to_string(index=False))
@@ -867,7 +620,6 @@ if __name__ == "__main__":
         feature_cols=best_feature_cols,
         sources=best_sources,
         k_config=best_k_config,
-        metric=DISTANCE_METRIC,
         method=best_method,
         weights_str=best_weights_str,
     )
@@ -876,57 +628,17 @@ if __name__ == "__main__":
         "Feature set": best_feature_set_name,
         "Sources": "+".join(best_sources),
         "k_config": str(best_k_config),
-        "Metric": DISTANCE_METRIC,
         "Method": best_method,
         "Weights": best_weights_str,
         "Test accuracy": best_test_acc,
         "Number of features": len(best_feature_cols),
     }])
 
-    test_summary.to_csv(TEST_RESULTS_CSV, index=False)
-    best_test_segment_df.to_csv(BEST_TEST_SEGMENT_PRED_CSV, index=False)
 
     if best_test_track_df is not None:
-        best_test_track_df.to_csv(BEST_TEST_TRACK_PRED_CSV, index=False)
 
         cm_df = make_confusion_matrix_df(best_test_track_df)
-        cm_df.to_csv(BEST_TEST_CM_CSV)
 
     print("Sluttresultat på TEST:")
     print(test_summary.to_string(index=False))
     print()
-
-    print("Lagrede filer:")
-    print(f"- {VALIDATION_RESULTS_CSV}")
-    print(f"- {TEST_RESULTS_CSV}")
-    print(f"- {BEST_TEST_SEGMENT_PRED_CSV}")
-
-    if best_test_track_df is not None:
-        print(f"- {BEST_TEST_TRACK_PRED_CSV}")
-        print(f"- {BEST_TEST_CM_CSV}")
-
-
-
-"""
-To avoid biasing the final performance estimate, the original training data was further split into a training subset and a validation subset based on Track ID. The validation subset was used for model selection, while the original test subset was kept untouched until the final evaluation.
-
-We evaluated multiple k-NN classifiers using Mahalanobis distance. The model design variables were:
-(1) the feature subset,
-(2) the segment source combination (5s, 10s, 30s, or combinations),
-(3) the number of neighbors k, where different values of k were allowed for different segment durations, and 
-(4) the track-level voting scheme.
-
-After selecting the best configuration based on validation accuracy, the classifier was retrained on the combined training and validation data, and finally evaluated on the test set.
-
-
-Dette oppsettet gjør at du kan svare ryddig på:
-
-Hvordan valgte dere k?
-Ved å teste flere k-konfigurasjoner på validation-settet.
-Hvordan valgte dere features?
-Ved å generere og teste mange feature-kombinasjoner fra et definert feature-pool.
-Hvordan unngikk dere å tilpasse dere test-settet?
-Ved å spare test-settet helt til slutt.
-Hvorfor ulik k for ulike datasett?
-Fordi 5s-, 10s- og 30s-segmenter har ulik informasjonsmengde og kan egne seg best med forskjellige nabotall.
-"""

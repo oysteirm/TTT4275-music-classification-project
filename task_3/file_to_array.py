@@ -33,9 +33,16 @@ def data_to_array_30s(file_path, feature_cols, label_col=None, include_track_id=
     train_test_split = 792
     max_idx = len(X)
 
-    # --- SPLIT ---
+    # split and standarize
     X_train = X[:train_test_split]
     X_test = X[train_test_split:max_idx]
+
+    mean = X_train.mean(axis=0)
+    std = X_train.std(axis=0)
+    std[std == 0] = 1
+
+    X_train = (X_train - mean) / std
+    X_test  = (X_test  - mean) / std
 
     outputs_train = [X_train]
     outputs_test = [X_test]
@@ -67,9 +74,16 @@ def data_to_array_10s(file_path, feature_cols, label_col=None, include_track_id=
     train_test_split = 792*3
     max_idx = len(X)
 
-    # --- SPLIT ---
+    # split and standarize
     X_train = X[:train_test_split]
     X_test = X[train_test_split:max_idx]
+
+    mean = X_train.mean(axis=0)
+    std = X_train.std(axis=0)
+    std[std == 0] = 1
+
+    X_train = (X_train - mean) / std
+    X_test  = (X_test  - mean) / std
 
     outputs_train = [X_train]
     outputs_test = [X_test]
@@ -102,9 +116,16 @@ def data_to_array_5s(file_path, feature_cols, label_col=None, include_track_id=F
     train_test_split = 792*6
     max_idx = len(X)
 
-    # --- SPLIT ---
+    # split and standarize
     X_train = X[:train_test_split]
     X_test = X[train_test_split:max_idx]
+
+    mean = X_train.mean(axis=0)
+    std = X_train.std(axis=0)
+    std[std == 0] = 1
+
+    X_train = (X_train - mean) / std
+    X_test  = (X_test  - mean) / std
 
     outputs_train = [X_train]
     outputs_test = [X_test]
