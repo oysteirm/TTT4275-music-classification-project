@@ -31,7 +31,7 @@ SOURCE_COMBINATIONS = [
 ]
 
 WEIGHT_CONFIGS = [
-    {"5s": 1, "10s": 1, "30s": 1},
+    {"5s": 1, "10s": 3, "30s": 6},
     # {"5s": 1, "10s": 1, "30s": 2},
     {"5s": 1, "10s": 2, "30s": 3},
     # {"5s": 1, "10s": 3, "30s": 5},
@@ -105,33 +105,33 @@ ALL_FEATURES = [
 
 #features to search in
 FEATURE_POOL = [
-    #"zero_cross_rate_mean",
-    #"zero_cross_rate_std",
+    "zero_cross_rate_mean",
+    "zero_cross_rate_std",
     "rmse_mean",
     "rmse_var",
     "spectral_centroid_mean",
-    #"spectral_centroid_var",
-    #"spectral_bandwidth_mean",
-    #"spectral_bandwidth_var",
-    #"spectral_rolloff_mean",
-    #"spectral_rolloff_var",
-    #"spectral_contrast_mean",
-    #"spectral_contrast_var",
-    #"spectral_flatness_mean",
-    #"spectral_flatness_var",
+    "spectral_centroid_var",
+    "spectral_bandwidth_mean",
+    "spectral_bandwidth_var",
+    "spectral_rolloff_mean",
+    "spectral_rolloff_var",
+    "spectral_contrast_mean",
+    "spectral_contrast_var",
+    "spectral_flatness_mean",
+    "spectral_flatness_var",
     "chroma_stft_6_mean",
     "chroma_stft_4_std",
     "tempo",
-    #"mfcc_4_mean",
-    #"mfcc_6_std",
+    "mfcc_4_mean",
+    "mfcc_6_std",
 ]
 
 # feature set sizing 
-MIN_FEATURES = 4
-MAX_FEATURES = 6
+MIN_FEATURES = 10
+MAX_FEATURES = 10
 
 # Max number of feature sets to test on
-MAX_NUMBER_OF_FEATURE_SETS = 5
+MAX_NUMBER_OF_FEATURE_SETS = 50
 
 #Functions start
 
@@ -244,7 +244,7 @@ def load_data_for_split(sources ,feature_cols, split_name):
     return pd.concat(dfs, ignore_index=True)
 
 #standization 
-def standardize_using_reference(reference_df, target_df, feature_cols):
+def standardize(reference_df, target_df, feature_cols):
     X_ref = reference_df[feature_cols].to_numpy(dtype=float)
     X_target = target_df[feature_cols].to_numpy(dtype=float)
 
@@ -299,7 +299,7 @@ def predict_for_one_source(source, feature_cols, k, train_split_name, eval_split
         split_name=eval_split_name,
     )
 
-    X_train, X_eval = standardize_using_reference(
+    X_train, X_eval = standardize(
         reference_df=train_df,
         target_df=eval_df,
         feature_cols=feature_cols,
@@ -336,7 +336,7 @@ def predict_for_source_combination(sources, feature_cols, k_config, train_split_
 
 #voting
 def segment_level_accuracy(pred_df):
-    return float((pred_df["Predicted GenreID"] == pred_df["True GenreID"]).mean())
+    return 
 
 
 def majority_vote_all_segments(pred_df):
@@ -356,7 +356,7 @@ def majority_vote_all_segments(pred_df):
     track_df = pd.DataFrame(rows)
     accuracy = float((track_df["Predicted GenreID"] == track_df["True GenreID"]).mean())
 
-    return accuracy, track_df
+    return accuracy
 
 
 def majority_vote_per_source_equal(pred_df):
@@ -383,7 +383,7 @@ def majority_vote_per_source_equal(pred_df):
     track_df = pd.DataFrame(rows)
     accuracy = float((track_df["Predicted GenreID"] == track_df["True GenreID"]).mean())
 
-    return accuracy, track_df
+    return accuracy
 
 
 def majority_vote_per_source_weighted(pred_df, weights):
@@ -413,7 +413,7 @@ def majority_vote_per_source_weighted(pred_df, weights):
     track_df = pd.DataFrame(rows)
     accuracy = float((track_df["Predicted GenreID"] == track_df["True GenreID"]).mean())
 
-    return accuracy, track_df
+    return accuracy
 
 #evaluate one
 def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_config, weight_configs):
@@ -427,8 +427,8 @@ def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_con
     )
 
     results = []
-
-    seg_acc = segment_level_accuracy(segment_pred_df)
+    #calc accuracy
+    seg_acc = float((segment_pred_df["Predicted GenreID"] == segment_pred_df["True GenreID"]).mean())
     results.append({
         "Feature set": feature_set_name,
         "Sources": "+".join(sources),
@@ -439,7 +439,7 @@ def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_con
         "Validation accuracy": seg_acc,
     })
 
-    acc_all, track_df_all = majority_vote_all_segments(segment_pred_df)
+    acc_all = majority_vote_all_segments(segment_pred_df)
     results.append({
         "Feature set": feature_set_name,
         "Sources": "+".join(sources),
@@ -450,7 +450,7 @@ def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_con
         "Validation accuracy": acc_all,
     })
 
-    acc_equal, track_df_equal = majority_vote_per_source_equal(segment_pred_df)
+    acc_equal = majority_vote_per_source_equal(segment_pred_df)
     results.append({
         "Feature set": feature_set_name,
         "Sources": "+".join(sources),
@@ -462,7 +462,7 @@ def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_con
     })
 
     for weights in weight_configs:
-        acc_weighted, _ = majority_vote_per_source_weighted(segment_pred_df, weights)
+        acc_weighted = majority_vote_per_source_weighted(segment_pred_df, weights)
         results.append({ 
         "Feature set": feature_set_name,
         "Sources": "+".join(sources),
@@ -537,120 +537,106 @@ def generate_k_configs_for_sources(sources, k_values_per_source):
     return k_configs
 
 #main
+train_ids, validation_ids, test_ids = get_all_splits()
+print("Datasplitt:")
+print(f"Antall train tracks      : {len(train_ids)}")
+print(f"Antall validation tracks : {len(validation_ids)}")
+print(f"Antall test tracks       : {len(test_ids)}")
+print()
 
+feature_sets = generate_feature_sets(
+    feature_pool=FEATURE_POOL,
+    min_size=MIN_FEATURES,
+    max_size=MAX_FEATURES,
+    max_feature_sets=MAX_NUMBER_OF_FEATURE_SETS,
+)
 
-if __name__ == "__main__":
-    print("\nStarter oppgave 4-eksperimenter")
-    print()
+print(f"Antall feature-sett som faktisk testes: {len(feature_sets)}")
+print()
 
-    train_ids, validation_ids, test_ids = get_all_splits()
-    print("Datasplitt:")
-    print(f"Antall train tracks      : {len(train_ids)}")
-    print(f"Antall validation tracks : {len(validation_ids)}")
-    print(f"Antall test tracks       : {len(test_ids)}")
-    print()
+all_validation_results = []
 
-    feature_sets = generate_feature_sets(
-        feature_pool=FEATURE_POOL,
-        min_size=MIN_FEATURES,
-        max_size=MAX_FEATURES,
-        max_feature_sets=MAX_NUMBER_OF_FEATURE_SETS,
-    )
+experiment_counter = 0
 
-    print(f"Antall feature-sett som faktisk testes: {len(feature_sets)}")
-    print()
+for feature_set_name, feature_cols in feature_sets:
+    for sources in SOURCE_COMBINATIONS:
+        k_configs = generate_k_configs_for_sources(
+            sources=sources,
+            k_values_per_source=K_VALUES_PER_SOURCE,
+        )
 
-    all_validation_results = []
+        for k_config in k_configs:
+            experiment_counter += 1
 
-    experiment_counter = 0
+            print("=" * 80)
+            print(f"Eksperiment {experiment_counter}")
+            print(f"Feature set : {feature_set_name}")
+            print(f"Antall features: {len(feature_cols)}")
+            print(f"Sources      : {sources}")
+            print(f"k per source : {k_config}")
+            print("Trener på TRAIN, evaluerer på VALIDATION")
 
-    for feature_set_name, feature_cols in feature_sets:
-        for sources in SOURCE_COMBINATIONS:
-            k_configs = generate_k_configs_for_sources(
+            results_df = evaluate_one_validation_setup(
+                feature_set_name=feature_set_name,
+                feature_cols=feature_cols,
                 sources=sources,
-                k_values_per_source=K_VALUES_PER_SOURCE,
+                k_config=k_config,
+                weight_configs=WEIGHT_CONFIGS,
             )
 
-            for k_config in k_configs:
-                experiment_counter += 1
+            print("Validation-resultater:")
+            print(results_df[["Method", "Weights", "Validation accuracy"]].to_string(index=False))
+            print()
 
-                print("=" * 80)
-                print(f"Eksperiment {experiment_counter}")
-                print(f"Feature set : {feature_set_name}")
-                print(f"Antall features: {len(feature_cols)}")
-                print(f"Sources      : {sources}")
-                print(f"k per source : {k_config}")
-                print("Trener på TRAIN, evaluerer på VALIDATION")
-
-                results_df = evaluate_one_validation_setup(
-                    feature_set_name=feature_set_name,
-                    feature_cols=feature_cols,
-                    sources=sources,
-                    k_config=k_config,
-                    weight_configs=WEIGHT_CONFIGS,
-                )
-
-                print("Validation-resultater:")
-                print(results_df[["Method", "Weights", "Validation accuracy"]].to_string(index=False))
-                print()
-
-                all_validation_results.append(results_df)
+            all_validation_results.append(results_df)
 
 
-    validation_results_df = pd.concat(all_validation_results, ignore_index=True)
-    validation_results_df = validation_results_df.sort_values(
-        by="Validation accuracy",
-        ascending=False
-    ).reset_index(drop=True)
+validation_results_df = pd.concat(all_validation_results, ignore_index=True)
+validation_results_df = validation_results_df.sort_values(
+    by="Validation accuracy",
+    ascending=False
+).reset_index(drop=True)
 
 
-    print("\nBeste oppsett på validation:")
-    print(validation_results_df.head(20).to_string(index=False))
+print("\nBeste oppsett på validation:")
+print(validation_results_df.head(20).to_string(index=False))
 
-    best_row = validation_results_df.iloc[0]
+best_row = validation_results_df.iloc[0]
 
-    best_feature_set_name = best_row["Feature set"]
-    best_sources = best_row["Sources"].split("+")
-    best_k_config = eval(best_row["k_config"])
-    best_method = best_row["Method"]
-    best_weights_str = best_row["Weights"]
+best_feature_set_name = best_row["Feature set"]
+best_sources = best_row["Sources"].split("+")
+best_k_config = eval(best_row["k_config"])
+best_method = best_row["Method"]
+best_weights_str = best_row["Weights"]
 
-    best_feature_cols = None
-    for fs_name, fs_cols in feature_sets:
-        if fs_name == best_feature_set_name:
-            best_feature_cols = fs_cols
-            break
+best_feature_cols = None
+for fs_name, fs_cols in feature_sets:
+    if fs_name == best_feature_set_name:
+        best_feature_cols = fs_cols
+        break
 
-    if best_feature_cols is None:
-        raise RuntimeError("Fant ikke feature-settet for beste oppsett.")
+if best_feature_cols is None:
+    raise RuntimeError("Fant ikke feature-settet for beste oppsett.")
 
-    print("\nValgt beste modell basert på validation:")
-    print(best_row.to_string())
-    print("\nNå trenes modellen på TRAIN + VALIDATION, og evalueres på TEST.\n")
+print("\nValgt beste modell basert på validation:")
+print(best_row.to_string())
+print("\nNå trenes modellen på TRAIN + VALIDATION, og evalueres på TEST.\n")
 
-    best_test_segment_df, best_test_track_df, best_test_acc = evaluate_best_setup_on_test(
-        feature_cols=best_feature_cols,
-        sources=best_sources,
-        k_config=best_k_config,
-        method=best_method,
-        weights_str=best_weights_str,
-    )
+best_test_segment_df, best_test_track_df, best_test_acc = evaluate_best_setup_on_test(
+    feature_cols=best_feature_cols,
+    sources=best_sources,
+    k_config=best_k_config,
+    method=best_method,
+    weights_str=best_weights_str,
+)
 
-    test_summary = pd.DataFrame([{
-        "Feature set": best_feature_set_name,
-        "Sources": "+".join(best_sources),
-        "k_config": str(best_k_config),
-        "Method": best_method,
-        "Weights": best_weights_str,
-        "Test accuracy": best_test_acc,
-        "Number of features": len(best_feature_cols),
-    }])
+cm_df = make_confusion_matrix_df(best_test_track_df)
 
-
-    if best_test_track_df is not None:
-
-        cm_df = make_confusion_matrix_df(best_test_track_df)
-
-    print("Sluttresultat på TEST:")
-    print(test_summary.to_string(index=False))
-    print()
+print("Sluttresultat på TEST:")
+print(f"Feature set: {best_feature_set_name}\n"
+f"Sources: {'+'.join(best_sources)}\n"
+f"k_config: {best_k_config}\n"
+f"Method: {best_method}\n"
+f"Weights: {best_weights_str}\n"
+f"Test accuracy: {best_test_acc}\n"
+f"Number of features: {len(best_feature_cols)}")
