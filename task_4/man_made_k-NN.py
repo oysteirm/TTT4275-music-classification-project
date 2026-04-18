@@ -396,7 +396,7 @@ def majority_vote_per_source_weighted(pred_df, weights):
         for source, source_group in track_group.groupby("source"):
             source_winner = Counter(source_group["Predicted GenreID"]).most_common(1)[0][0]
             winners_per_source[source] = source_winner
-            weighted_votes[source_winner] += weights.get(source, 1)
+            weighted_votes[source_winner] += weights[source]
 
         final_prediction = weighted_votes.most_common(1)[0][0]
         true_label = track_group["True GenreID"].iloc[0]
