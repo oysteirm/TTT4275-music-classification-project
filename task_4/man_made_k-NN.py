@@ -18,23 +18,21 @@ DATA_FILES = {
 
 DATASET_CACHE = {}
 
-#Testing of k values
 K_VALUES_PER_SOURCE = {
-    "5s": [10, 15],
-    "10s": [10, 15],
-    "30s": [10, 15],
+    "5s": [5, 10, 15],
+    "10s": [5, 10, 15],
+    "30s": [5, 10, 15],
 }
 
-# Hvilke kilder som skal være med i eksperimentene
 SOURCE_COMBINATIONS = [
+    # ["5s", "30s"],
+    # ["10s", "30s"],
     ["5s", "10s", "30s"],
 ]
 
 WEIGHT_CONFIGS = [
     {"5s": 1, "10s": 3, "30s": 6},
-    # {"5s": 1, "10s": 1, "30s": 2},
     {"5s": 1, "10s": 2, "30s": 3},
-    # {"5s": 1, "10s": 3, "30s": 5},
 ]
 
 ALL_FEATURES = [
@@ -141,10 +139,8 @@ def count_total_combinations(n, min_size, max_size):
         total += math.comb(n, r)
     return total
 
-#genrate random feature sets
-def generate_feature_sets(feature_pool, min_size, max_size, max_feature_sets, random_seed = 42):
-    rng = random.Random(random_seed)
-
+#genrate feature sets
+def generate_feature_sets(feature_pool, min_size, max_size, max_feature_sets):
     all_feature_sets = []
     n = len(feature_pool)
     total_possible = count_total_combinations(n, min_size, max_size)
@@ -156,28 +152,20 @@ def generate_feature_sets(feature_pool, min_size, max_size, max_feature_sets, ra
     print(f"Maks størrelse: {max_size}")
     print(f"Totalt antall mulige kombinasjoner: {total_possible}")
 
-    if total_possible <= max_feature_sets:
-        print("Alle kombinasjoner brukes.\n")
-        counter = 0
-        for r in range(min_size, max_size + 1):
-            for comb in combinations(feature_pool, r):
-                counter += 1
-                name = f"auto_fs_{counter}"
-                all_feature_sets.append((name, list(comb)))
-    else:
-        print(f"For mange kombinasjoner. Trekker tilfeldig ut {max_feature_sets} feature-sett.\n")
+    counter = 0
 
-        all_candidates = []
-        for r in range(min_size, max_size + 1):
-            for comb in combinations(feature_pool, r):
-                all_candidates.append(comb)
-
-        sampled = rng.sample(all_candidates, max_feature_sets)
-
-        for i, comb in enumerate(sampled, start=1):
-            name = f"auto_fs_{i}"
+    for r in range(min_size, max_size + 1):
+        for comb in combinations(feature_pool, r):
+            counter += 1
+            name = f"auto_fs_{counter}"
             all_feature_sets.append((name, list(comb)))
 
+            # Stop early if we hit the max limit
+            if counter >= max_feature_sets:
+                print(f"Reached max_feature_sets={max_feature_sets}, stopping early.\n")
+                return all_feature_sets
+
+    print("Alle kombinasjoner brukt.\n")
     return all_feature_sets
 
 #Data reading
@@ -208,6 +196,7 @@ def get_original_train_test_track_ids():
     df_30 = pd.read_csv(DATA_FILES["30s"], sep="\t")
     split_idx = split_index_for_dataset("30s")
 
+    #.iloc used to split rows into train and test
     original_train_ids = df_30.iloc[:split_idx]["Track ID"].tolist()
     original_test_ids = df_30.iloc[split_idx:]["Track ID"].tolist()
 
@@ -216,6 +205,8 @@ def get_original_train_test_track_ids():
 def get_all_splits():
     original_train_ids, original_test_ids = get_original_train_test_track_ids()
 
+    #every 4 song is validation, making the the total split
+    #train:600, validation:200, test: 200
     validation_ids = set(original_train_ids[::4])
     train_ids = set(id for id in original_train_ids if id not in validation_ids)
     test_ids = set(original_test_ids)
@@ -257,7 +248,6 @@ def standardize(reference_df, target_df, feature_cols):
 
     return X_ref_std, X_target_std
 
-
 def compute_inverse_covariance(X_train):
     cov = np.cov(X_train, rowvar=False)
     if np.ndim(cov) == 0:
@@ -265,7 +255,7 @@ def compute_inverse_covariance(X_train):
     return np.linalg.pinv(cov)
 
 
-def compute_distances_to_train(x_test, X_train, cov_inv):
+def compute_Mahalanobis_distances_to_train(x_test, X_train, cov_inv):
     diffs = X_train - x_test
     return np.sum(diffs @ cov_inv * diffs, axis=1)
 
@@ -275,7 +265,7 @@ def predict_knn(X_train, y_train, X_eval, k):
     cov_inv = compute_inverse_covariance(X_train)
 
     for x_test in X_eval:
-        distances = compute_distances_to_train(x_test=x_test, X_train=X_train, cov_inv=cov_inv)
+        distances = compute_Mahalanobis_distances_to_train(x_test, X_train, cov_inv)
 
         nearest_idx = np.argsort(distances)[:k]
         nearest_labels = y_train[nearest_idx]
@@ -284,33 +274,16 @@ def predict_knn(X_train, y_train, X_eval, k):
 
     return np.array(predictions)
 
-#Predictrions
-
+#Predictions
 def predict_for_one_source(source, feature_cols, k, train_split_name, eval_split_name):
-    train_df = load_data_for_split(
-        sources=[source],
-        feature_cols=feature_cols,
-        split_name=train_split_name,
-    )
 
-    eval_df = load_data_for_split(
-        sources=[source],
-        feature_cols=feature_cols,
-        split_name=eval_split_name,
-    )
+    train_df = load_data_for_split([source], feature_cols, train_split_name)
+    eval_df = load_data_for_split([source], feature_cols, eval_split_name)
 
-    X_train, X_eval = standardize(
-        reference_df=train_df,
-        target_df=eval_df,
-        feature_cols=feature_cols,
-    )
+    X_train, X_eval = standardize(train_df, eval_df, feature_cols)
 
     y_train = train_df["GenreID"].to_numpy()
-    preds = predict_knn(
-        X_train=X_train,
-        y_train=y_train,
-        X_eval=X_eval,
-        k=k)
+    preds = predict_knn(X_train, y_train, X_eval, k)
 
     out_df = eval_df[["Track ID", "GenreID", "source"]].copy()
     out_df.rename(columns={"GenreID": "True GenreID"}, inplace=True)
@@ -323,20 +296,13 @@ def predict_for_source_combination(sources, feature_cols, k_config, train_split_
     all_predictions = []
 
     for source in sources:
-        source_pred_df = predict_for_one_source(
-            source=source,
-            feature_cols=feature_cols,
-            k=k_config[source],
-            train_split_name=train_split_name,
-            eval_split_name=eval_split_name,
-        )
+        source_pred_df = predict_for_one_source(source, feature_cols, k_config[source], train_split_name, eval_split_name)
         all_predictions.append(source_pred_df)
 
     return pd.concat(all_predictions, ignore_index=True)
 
 #voting
-
-
+#every segment is weighted equally
 def majority_vote_all_segments(pred_df):
     rows = []
 
@@ -356,7 +322,7 @@ def majority_vote_all_segments(pred_df):
 
     return accuracy, track_df
 
-
+#every source is weighted eqaully
 def majority_vote_per_source_equal(pred_df):
     rows = []
 
@@ -383,7 +349,7 @@ def majority_vote_per_source_equal(pred_df):
 
     return accuracy, track_df
 
-
+#every source is weighted based on WEIGHT_CONFIGS 
 def majority_vote_per_source_weighted(pred_df, weights):
     rows = []
 
@@ -416,16 +382,10 @@ def majority_vote_per_source_weighted(pred_df, weights):
 #evaluate one
 def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_config, weight_configs):
 
-    segment_pred_df = predict_for_source_combination(
-        sources=sources,
-        feature_cols=feature_cols,
-        k_config=k_config,
-        train_split_name="train",
-        eval_split_name="validation",
-    )
+    segment_pred_df = predict_for_source_combination(sources, feature_cols, k_config, "train", "validation")
 
     results = []
-    #calc accuracy
+
     seg_acc = float((segment_pred_df["Predicted GenreID"] == segment_pred_df["True GenreID"]).mean())
     results.append({
         "Feature set": feature_set_name,
@@ -475,21 +435,13 @@ def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_con
 
     return results_df
 
-#evaluate all
-
-
+#final test based on model chosen
 def evaluate_best_setup_on_test(feature_cols, sources, k_config, method, weights_str):
 
-    segment_pred_df = predict_for_source_combination(
-        sources=sources,
-        feature_cols=feature_cols,
-        k_config=k_config,
-        train_split_name="train_plus_validation",
-        eval_split_name="test",
-    )
+    segment_pred_df = predict_for_source_combination(sources, feature_cols, k_config, "train_plus_validation", "test")
 
     if method == "segment_level":
-        acc = segment_level_accuracy(segment_pred_df)
+        acc = float((segment_pred_df["Predicted GenreID"] == segment_pred_df["True GenreID"]).mean())
         track_df = None
 
     elif method == "majority_all_segments":
@@ -508,17 +460,9 @@ def evaluate_best_setup_on_test(feature_cols, sources, k_config, method, weights
 def make_confusion_matrix_df(track_df):
     labels = sorted(track_df["True GenreID"].unique())
 
-    cm = confusion_matrix(
-        track_df["True GenreID"],
-        track_df["Predicted GenreID"],
-        labels=labels,
-    )
+    cm = confusion_matrix(track_df["True GenreID"], track_df["Predicted GenreID"], labels=labels)
 
-    return pd.DataFrame(
-        cm,
-        index=[f"true_{label}" for label in labels],
-        columns=[f"pred_{label}" for label in labels],
-    )
+    return pd.DataFrame(cm, [f"true_{label}" for label in labels], [f"pred_{label}" for label in labels])
 
 #make k konfigs
 def generate_k_configs_for_sources(sources, k_values_per_source):
@@ -536,20 +480,15 @@ def generate_k_configs_for_sources(sources, k_values_per_source):
 
 #main
 train_ids, validation_ids, test_ids = get_all_splits()
-print("Datasplitt:")
-print(f"Antall train tracks      : {len(train_ids)}")
-print(f"Antall validation tracks : {len(validation_ids)}")
-print(f"Antall test tracks       : {len(test_ids)}")
+print("Data information:")
+print(f"Number of train tracks      : {len(train_ids)}")
+print(f"Number of validation tracks : {len(validation_ids)}")
+print(f"Number of test tracks       : {len(test_ids)}")
 print()
 
-feature_sets = generate_feature_sets(
-    feature_pool=FEATURE_POOL,
-    min_size=MIN_FEATURES,
-    max_size=MAX_FEATURES,
-    max_feature_sets=MAX_NUMBER_OF_FEATURE_SETS,
-)
+feature_sets = generate_feature_sets(FEATURE_POOL, MIN_FEATURES, MAX_FEATURES, MAX_NUMBER_OF_FEATURE_SETS)
 
-print(f"Antall feature-sett som faktisk testes: {len(feature_sets)}")
+print(f"Number of features that is tested: {len(feature_sets)}")
 print()
 
 all_validation_results = []
@@ -558,31 +497,22 @@ experiment_counter = 0
 
 for feature_set_name, feature_cols in feature_sets:
     for sources in SOURCE_COMBINATIONS:
-        k_configs = generate_k_configs_for_sources(
-            sources=sources,
-            k_values_per_source=K_VALUES_PER_SOURCE,
-        )
+        k_configs = generate_k_configs_for_sources(sources, K_VALUES_PER_SOURCE)
 
         for k_config in k_configs:
             experiment_counter += 1
 
             print("=" * 80)
-            print(f"Eksperiment {experiment_counter}")
+            print(f"Experiment {experiment_counter}")
             print(f"Feature set : {feature_set_name}")
-            print(f"Antall features: {len(feature_cols)}")
+            print(f"Number of features: {len(feature_cols)}")
             print(f"Sources      : {sources}")
             print(f"k per source : {k_config}")
-            print("Trener på TRAIN, evaluerer på VALIDATION")
+            print("TRAIN and VALIDATION")
 
-            results_df = evaluate_one_validation_setup(
-                feature_set_name=feature_set_name,
-                feature_cols=feature_cols,
-                sources=sources,
-                k_config=k_config,
-                weight_configs=WEIGHT_CONFIGS,
-            )
+            results_df = evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_config, WEIGHT_CONFIGS)
 
-            print("Validation-resultater:")
+            print("Validation results:")
             print(results_df[["Method", "Weights", "Validation accuracy"]].to_string(index=False))
             print()
 
@@ -590,10 +520,7 @@ for feature_set_name, feature_cols in feature_sets:
 
 
 validation_results_df = pd.concat(all_validation_results, ignore_index=True)
-validation_results_df = validation_results_df.sort_values(
-    by="Validation accuracy",
-    ascending=False
-).reset_index(drop=True)
+validation_results_df = validation_results_df.sort_values(by="Validation accuracy", ascending=False).reset_index(drop=True)
 
 
 print("\nBeste oppsett på validation:")
@@ -613,24 +540,16 @@ for fs_name, fs_cols in feature_sets:
         best_feature_cols = fs_cols
         break
 
-if best_feature_cols is None:
-    raise RuntimeError("Fant ikke feature-settet for beste oppsett.")
 
-print("\nValgt beste modell basert på validation:")
+print("\nChoose best model based on validation:")
 print(best_row.to_string())
-print("\nNå trenes modellen på TRAIN + VALIDATION, og evalueres på TEST.\n")
+print("\nTraining on TRAIN + VALIDATION, and evaluating on TEST.\n")
 
-best_test_segment_df, best_test_track_df, best_test_acc = evaluate_best_setup_on_test(
-    feature_cols=best_feature_cols,
-    sources=best_sources,
-    k_config=best_k_config,
-    method=best_method,
-    weights_str=best_weights_str,
-)
+best_test_segment_df, best_test_track_df, best_test_acc = evaluate_best_setup_on_test(best_feature_cols, best_sources, best_k_config, best_method, best_weights_str)
 
 cm_df = make_confusion_matrix_df(best_test_track_df)
 
-print("Sluttresultat på TEST:")
+print("End result TEST:")
 print(f"Feature set: {best_feature_set_name}\n"
 f"Sources: {'+'.join(best_sources)}\n"
 f"k_config: {best_k_config}\n"
