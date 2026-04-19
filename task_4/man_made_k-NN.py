@@ -167,11 +167,11 @@ RANKED_FEATURES = [
 FEATURE_POOL = RANKED_FEATURES
 
 # feature set sizing 
-MIN_FEATURES = 30
+MIN_FEATURES = 31
 MAX_FEATURES = 32
 
 # Max number of feature sets to test on
-MAX_NUMBER_OF_FEATURE_SETS = 200
+MAX_NUMBER_OF_FEATURE_SETS = 500
 
 #Functions start
 
