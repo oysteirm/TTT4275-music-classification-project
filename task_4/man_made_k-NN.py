@@ -97,37 +97,81 @@ ALL_FEATURES = [
     "mfcc_11_std",
     "mfcc_12_std",
 ]
+RANKED_FEATURES = [
+    "spectral_centroid_mean", #1  : 0.292929  0.707071
+    "mfcc_1_mean", #2             : 0.272727  0.727273
+    "spectral_flatness_var", #3   : 0.257576  0.742424
+    "rmse_mean", #4               : 0.252525  0.747475
+    "spectral_bandwidth_mean", #5 : 0.247475  0.752525
+    "spectral_rolloff_mean", #6   : 0.247475  0.752525
+    "rmse_var", #7                : 0.232323  0.767677
+    "zero_cross_rate_std", #8     : 0.222222  0.777778
+    "spectral_flatness_mean", #9  : 0.207071  0.792929
+    "mfcc_5_std", #10             : 0.207071  0.792929
+    "chroma_stft_2_std", #11      : 0.207071  0.792929
+    "spectral_centroid_var", #12  : 0.202020  0.797980
+    "chroma_stft_5_std", #13      : 0.202020  0.797980
+    "mfcc_5_mean", #14            : 0.202020  0.797980
+    "chroma_stft_12_mean", #15    : 0.202020  0.797980
+    "mfcc_2_mean", #16            : 0.202020  0.797980
+    "spectral_contrast_mean", #17 : 0.196970  0.803030
+    "mfcc_9_mean", #18            : 0.196970  0.803030
+    "mfcc_10_mean", #19           : 0.196970  0.803030
+    "spectral_contrast_var", #20  : 0.196970  0.803030
+    "mfcc_4_mean", #21            : 0.196970  0.803030
+    "chroma_stft_2_mean", #22     : 0.196970  0.803030
+    "mfcc_8_std", #23             : 0.196970  0.803030
+    "chroma_stft_9_std", #24      : 0.196970  0.803030
+    "mfcc_1_std", #25             : 0.191919  0.808081
+    "mfcc_11_std", #26            : 0.191919  0.808081
+    "mfcc_12_mean", #27           : 0.186869  0.813131
+    "mfcc_8_mean", #28            : 0.186869  0.813131
+    "mfcc_12_std", #29            : 0.181818  0.818182
+    "chroma_stft_1_std", #30      : 0.181818  0.818182
+    "mfcc_2_std", #31             : 0.181818  0.818182
+    "chroma_stft_4_mean", #32     : 0.176768  0.823232
+    # "mfcc_7_std", #33             : 0.176768  0.823232
+    # "mfcc_3_std", #34             : 0.176768  0.823232
+    # "mfcc_6_mean", #35            : 0.166667  0.833333
+    # "chroma_stft_12_std", #36     : 0.166667  0.833333
+    # "zero_cross_rate_mean", #37   : 0.166667  0.833333
+    # "chroma_stft_10_std", #38     : 0.166667  0.833333
+    # "chroma_stft_9_mean", #39     : 0.166667  0.833333
+    # "chroma_stft_11_std", #40     : 0.161616  0.838384
+    # "chroma_stft_1_mean", #41     : 0.161616  0.838384
+    # "chroma_stft_5_mean", #42     : 0.161616  0.838384
+    # "chroma_stft_11_mean", #43    : 0.161616  0.838384
+    # "spectral_bandwidth_var", #44 : 0.156566  0.843434
+    # "spectral_rolloff_var", #45   : 0.156566  0.843434
+    # "mfcc_4_std", #46             : 0.156566  0.843434
+    # "chroma_stft_6_mean", #47     : 0.156566  0.843434
+    # "chroma_stft_7_mean", #48     : 0.151515  0.848485
+    # "mfcc_6_std", #49             : 0.151515  0.848485
+    # "chroma_stft_8_mean", #50     : 0.151515  0.848485
+    # "mfcc_3_mean", #51            : 0.151515  0.848485
+    # "chroma_stft_4_std", #52      : 0.146465  0.853535
+    # "mfcc_11_mean", #53           : 0.141414  0.858586
+    # "mfcc_9_std", #54             : 0.141414  0.858586
+    # "chroma_stft_6_std", #55      : 0.141414  0.858586
+    # "chroma_stft_10_mean", #56    : 0.136364  0.863636
+    # "mfcc_7_mean", #57            : 0.136364  0.863636
+    # "mfcc_10_std", #58            : 0.136364  0.863636
+    # "chroma_stft_8_std", #59      : 0.136364  0.863636
+    # "chroma_stft_3_std", #60      : 0.126263  0.873737
+    # "chroma_stft_3_mean", #61     : 0.121212  0.878788
+    # "chroma_stft_7_std", #62      : 0.106061  0.893939
+    # "tempo", #63                  : 0.085859  0.914141
+]
 
 #features to search in
-FEATURE_POOL = ALL_FEATURES
-# [
-#     "zero_cross_rate_mean",
-#     "zero_cross_rate_std",
-#     "rmse_mean",
-#     "rmse_var",
-#     "spectral_centroid_mean",
-#     "spectral_centroid_var",
-#     "spectral_bandwidth_mean",
-#     "spectral_bandwidth_var",
-#     "spectral_rolloff_mean",
-#     "spectral_rolloff_var",
-#     "spectral_contrast_mean",
-#     "spectral_contrast_var",
-#     "spectral_flatness_mean",
-#     "spectral_flatness_var",
-#     "chroma_stft_6_mean",
-#     "chroma_stft_4_std",
-#     "tempo",
-#     "mfcc_4_mean",
-#     "mfcc_6_std",
-# ]
+FEATURE_POOL = RANKED_FEATURES
 
 # feature set sizing 
-MIN_FEATURES = 63
-MAX_FEATURES = 63
+MIN_FEATURES = 32
+MAX_FEATURES = 30
 
 # Max number of feature sets to test on
-MAX_NUMBER_OF_FEATURE_SETS = 1000
+MAX_NUMBER_OF_FEATURE_SETS = 200
 
 #Functions start
 
