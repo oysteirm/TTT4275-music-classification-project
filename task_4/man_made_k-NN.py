@@ -2,7 +2,6 @@ from collections import Counter
 from itertools import combinations, product
 from pathlib import Path
 import math
-import random
 
 import numpy as np
 import pandas as pd
@@ -31,8 +30,9 @@ SOURCE_COMBINATIONS = [
 ]
 
 WEIGHT_CONFIGS = [
-    {"5s": 1, "10s": 3, "30s": 6},
+    {"5s": 1, "10s": 1, "30s": 1},
     {"5s": 1, "10s": 2, "30s": 3},
+    #{"5s": 1, "10s": 2, "30s": 6}
 ]
 
 ALL_FEATURES = [
@@ -102,34 +102,35 @@ ALL_FEATURES = [
 ]
 
 #features to search in
-FEATURE_POOL = [
-    "zero_cross_rate_mean",
-    "zero_cross_rate_std",
-    "rmse_mean",
-    "rmse_var",
-    "spectral_centroid_mean",
-    "spectral_centroid_var",
-    "spectral_bandwidth_mean",
-    "spectral_bandwidth_var",
-    "spectral_rolloff_mean",
-    "spectral_rolloff_var",
-    "spectral_contrast_mean",
-    "spectral_contrast_var",
-    "spectral_flatness_mean",
-    "spectral_flatness_var",
-    "chroma_stft_6_mean",
-    "chroma_stft_4_std",
-    "tempo",
-    "mfcc_4_mean",
-    "mfcc_6_std",
-]
+FEATURE_POOL = ALL_FEATURES
+# [
+#     "zero_cross_rate_mean",
+#     "zero_cross_rate_std",
+#     "rmse_mean",
+#     "rmse_var",
+#     "spectral_centroid_mean",
+#     "spectral_centroid_var",
+#     "spectral_bandwidth_mean",
+#     "spectral_bandwidth_var",
+#     "spectral_rolloff_mean",
+#     "spectral_rolloff_var",
+#     "spectral_contrast_mean",
+#     "spectral_contrast_var",
+#     "spectral_flatness_mean",
+#     "spectral_flatness_var",
+#     "chroma_stft_6_mean",
+#     "chroma_stft_4_std",
+#     "tempo",
+#     "mfcc_4_mean",
+#     "mfcc_6_std",
+# ]
 
 # feature set sizing 
-MIN_FEATURES = 10
-MAX_FEATURES = 10
+MIN_FEATURES = 63
+MAX_FEATURES = 63
 
 # Max number of feature sets to test on
-MAX_NUMBER_OF_FEATURE_SETS = 1
+MAX_NUMBER_OF_FEATURE_SETS = 1000
 
 #Functions start
 
@@ -302,25 +303,37 @@ def predict_for_source_combination(sources, feature_cols, k_config, train_split_
     return pd.concat(all_predictions, ignore_index=True)
 
 #voting
-#every segment is weighted equally
-def majority_vote_all_segments(pred_df):
+# every segment is weighted acording to source
+def majority_vote_all_segments_weighted(pred_df, weights):
     rows = []
 
     for track_id, group in pred_df.groupby("Track ID"):
-        predicted = Counter(group["Predicted GenreID"]).most_common(1)[0][0]
+        weighted_votes = Counter()
+
+        for _, row in group.iterrows():
+            genre = row["Predicted GenreID"]
+            source = row["source"]
+
+            weight = weights[source]
+
+            weighted_votes[genre] += weight
+
+        final_prediction = weighted_votes.most_common(1)[0][0]
         true_label = group["True GenreID"].iloc[0]
 
         rows.append({
             "Track ID": track_id,
             "True GenreID": true_label,
-            "Predicted GenreID": predicted,
-            "Method": "majority_all_segments",
+            "Predicted GenreID": final_prediction,
+            "Method": "weighted_segments",
+            "Weights": str(weights),
         })
 
     track_df = pd.DataFrame(rows)
     accuracy = float((track_df["Predicted GenreID"] == track_df["True GenreID"]).mean())
 
     return accuracy, track_df
+
 
 #every source is weighted eqaully
 def majority_vote_per_source_equal(pred_df):
@@ -349,35 +362,6 @@ def majority_vote_per_source_equal(pred_df):
 
     return accuracy, track_df
 
-#every source is weighted based on WEIGHT_CONFIGS 
-def majority_vote_per_source_weighted(pred_df, weights):
-    rows = []
-
-    for track_id, track_group in pred_df.groupby("Track ID"):
-        weighted_votes = Counter()
-        winners_per_source = {}
-
-        for source, source_group in track_group.groupby("source"):
-            source_winner = Counter(source_group["Predicted GenreID"]).most_common(1)[0][0]
-            winners_per_source[source] = source_winner
-            weighted_votes[source_winner] += weights[source]
-
-        final_prediction = weighted_votes.most_common(1)[0][0]
-        true_label = track_group["True GenreID"].iloc[0]
-
-        rows.append({
-            "Track ID": track_id,
-            "True GenreID": true_label,
-            "Predicted GenreID": final_prediction,
-            "Method": "group_vote_weighted",
-            "Weights": str(weights),
-            "Source winners": str(winners_per_source),
-        })
-
-    track_df = pd.DataFrame(rows)
-    accuracy = float((track_df["Predicted GenreID"] == track_df["True GenreID"]).mean())
-
-    return accuracy, track_df
 
 #evaluate one
 def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_config, weight_configs):
@@ -397,16 +381,17 @@ def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_con
         "Validation accuracy": seg_acc,
     })
 
-    acc_all, _ = majority_vote_all_segments(segment_pred_df)
-    results.append({
+    for weights in weight_configs:
+        acc_weighted, _ = majority_vote_all_segments_weighted(segment_pred_df, weights)
+        results.append({ 
         "Feature set": feature_set_name,
         "Sources": "+".join(sources),
         "k_config": str(k_config),
-        "Method": "majority_all_segments",
-        "Weights": "",
+        "Method": "weighted_segments",
+        "Weights": str(weights),
         "Number of features": len(feature_cols),
-        "Validation accuracy": acc_all,
-    })
+        "Validation accuracy": acc_weighted,
+        })
 
     acc_equal, _ = majority_vote_per_source_equal(segment_pred_df)
     results.append({
@@ -418,18 +403,6 @@ def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_con
         "Number of features": len(feature_cols),
         "Validation accuracy": acc_equal,
     })
-
-    for weights in weight_configs:
-        acc_weighted, _ = majority_vote_per_source_weighted(segment_pred_df, weights)
-        results.append({ 
-        "Feature set": feature_set_name,
-        "Sources": "+".join(sources),
-        "k_config": str(k_config),
-        "Method": "group_vote_weighted",
-        "Weights": str(weights),
-        "Number of features": len(feature_cols),
-        "Validation accuracy": acc_weighted,
-        })
 
     results_df = pd.DataFrame(results)
 
@@ -444,15 +417,12 @@ def evaluate_best_setup_on_test(feature_cols, sources, k_config, method, weights
         acc = float((segment_pred_df["Predicted GenreID"] == segment_pred_df["True GenreID"]).mean())
         track_df = None
 
-    elif method == "majority_all_segments":
-        acc, track_df = majority_vote_all_segments(segment_pred_df)
+    elif method == "weighted_segments":
+        weights = eval(weights_str)
+        acc, track_df = majority_vote_all_segments_weighted(segment_pred_df, weights)
 
     elif method == "group_vote_equal":
         acc, track_df = majority_vote_per_source_equal(segment_pred_df)
-
-    elif method == "group_vote_weighted":
-        weights = eval(weights_str)
-        acc, track_df = majority_vote_per_source_weighted(segment_pred_df, weights)
 
     return segment_pred_df, track_df, acc
 
@@ -550,7 +520,7 @@ best_test_segment_df, best_test_track_df, best_test_acc = evaluate_best_setup_on
 cm_df = make_confusion_matrix_df(best_test_track_df)
 
 print("End result TEST:")
-print(f"Feature set: {best_feature_set_name}\n"
+print(f"Feature set: {best_feature_cols}\n"
 f"Sources: {'+'.join(best_sources)}\n"
 f"k_config: {best_k_config}\n"
 f"Method: {best_method}\n"
