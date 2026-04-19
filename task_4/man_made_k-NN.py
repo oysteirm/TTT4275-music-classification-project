@@ -24,15 +24,12 @@ K_VALUES_PER_SOURCE = {
 }
 
 SOURCE_COMBINATIONS = [
-    # ["5s", "30s"],
-    # ["10s", "30s"],
     ["5s", "10s", "30s"],
 ]
 
 WEIGHT_CONFIGS = [
     {"5s": 1, "10s": 1, "30s": 1},
-    {"5s": 1, "10s": 2, "30s": 3},
-    #{"5s": 1, "10s": 2, "30s": 6}
+    {"5s": 1, "10s": 2, "30s": 3}
 ]
 
 ALL_FEATURES = [
