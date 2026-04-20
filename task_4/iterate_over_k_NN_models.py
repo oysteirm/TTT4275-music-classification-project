@@ -2,11 +2,8 @@ from collections import Counter
 from itertools import combinations, product
 from pathlib import Path
 import math
-
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
@@ -178,7 +175,6 @@ MAX_FEATURES = 63
 # Max number of feature sets to test on
 MAX_NUMBER_OF_FEATURE_SETS = 500
 
-#Functions start
 
 def count_total_combinations(n, min_size, max_size):
     total = 0
@@ -186,7 +182,6 @@ def count_total_combinations(n, min_size, max_size):
         total += math.comb(n, r)
     return total
 
-#genrate feature sets
 def generate_feature_sets(feature_pool, min_size, max_size, max_feature_sets):
     all_feature_sets = []
     n = len(feature_pool)
@@ -281,7 +276,6 @@ def load_data_for_split(sources ,feature_cols, split_name):
 
     return pd.concat(dfs, ignore_index=True)
 
-#standization 
 def standardize(reference_df, target_df, feature_cols):
     X_ref = reference_df[feature_cols].to_numpy(dtype=float)
     X_target = target_df[feature_cols].to_numpy(dtype=float)
@@ -409,7 +403,7 @@ def majority_vote_per_source_equal(pred_df):
     return accuracy, track_df
 
 
-#evaluate one
+#evaluate one 
 def evaluate_one_validation_setup(feature_set_name, feature_cols, sources, k_config, weight_configs):
 
     segment_pred_df = predict_for_source_combination(sources, feature_cols, k_config, "train", "validation")
@@ -512,7 +506,7 @@ def plot_confusion_matrix(cm, labels, title):
     plt.title(title)
     plt.show()
 
-#main
+# main
 train_ids, validation_ids, test_ids = get_all_splits()
 print("Data information:")
 print(f"Number of train tracks      : {len(train_ids)}")
@@ -552,10 +546,8 @@ for feature_set_name, feature_cols in feature_sets:
 
             all_validation_results.append(results_df)
 
-
 validation_results_df = pd.concat(all_validation_results, ignore_index=True)
 validation_results_df = validation_results_df.sort_values(by="Validation accuracy", ascending=False).reset_index(drop=True)
-
 
 print("\nBeste oppsett på validation:")
 print(validation_results_df.head(20).to_string(index=False))
@@ -574,7 +566,6 @@ for fs_name, fs_cols in feature_sets:
         best_feature_cols = fs_cols
         break
 
-
 print("\nChoose best model based on validation:")
 print(best_row.to_string())
 print("\nTraining on TRAIN + VALIDATION, and evaluating on TEST.\n")
@@ -582,7 +573,6 @@ print("\nTraining on TRAIN + VALIDATION, and evaluating on TEST.\n")
 best_test_segment_df, best_test_track_df, best_test_acc = evaluate_best_setup_on_test(best_feature_cols, best_sources, best_k_config, best_method, best_weights_str)
 
 cm_df = make_confusion_matrix_df(best_test_track_df)
-
 
 print("End result TEST:")
 print(f"Feature set: {best_feature_cols}\n"
@@ -593,12 +583,9 @@ f"Weights: {best_weights_str}\n"
 f"Test accuracy: {best_test_acc}\n"
 f"Number of features: {len(best_feature_cols)}")
 
-
-# Extract numpy array and labels
 cm = cm_df.values
 labels = [label.replace("true_", "") for label in cm_df.index]
 
-# Plot
 plot_confusion_matrix(
     cm,
     labels,

@@ -6,7 +6,6 @@ def normalize_standard(X):
     std = X.std(axis=0)
 
     std[std == 0] = 1
-
     return (X - mean) / std
 
 def mahalanobis_distance(x, y, cov_matrix):

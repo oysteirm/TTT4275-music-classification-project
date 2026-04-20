@@ -1,10 +1,9 @@
 import numpy as np
-import pandas as pd
 from collections import Counter
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
-from file_to_array import train_30s, test_30s, mahalanobis_distance, cov_matrix_30s, data_to_array_30s
+from file_to_array import train_30s, test_30s, mahalanobis_distance, cov_matrix_30s
 
 def k_NN_classifier(train_set,test_set,cov_m,k):
     
@@ -28,7 +27,6 @@ def k_NN_classifier(train_set,test_set,cov_m,k):
         for _,label in k_nearest:
              labels.append(label)
 
-        #choosing the most common label prediction
         prediction = Counter(labels).most_common(1)[0][0]
         predictions.append(prediction)
 
