@@ -1,15 +1,10 @@
 import numpy as np
 import pandas as pd
 
-#Example of usage
-#outputs_train[0] = normalize_standard(outputs_train[0])
-#outputs_test[0] = normalize_standard(outputs_test[0])
-
 def normalize_standard(X):
     mean = X.mean(axis=0)
     std = X.std(axis=0)
 
-    # avoid division by zero
     std[std == 0] = 1
 
     return (X - mean) / std
@@ -24,17 +19,14 @@ def data_to_array_30s(file_path, feature_cols, label_col=None, include_track_id=
 
     df = pd.read_csv(file_path, sep="\t")
 
-    # Features
     X = df[feature_cols].values
-    # Optional outputs
+
     y = df[label_col].values if label_col else None
     track_id = df["Track ID"].values if include_track_id else None
 
     train_test_split = 792
     max_idx = len(X)
 
-
-    # split and standarize
     X_train = X[:train_test_split]
     X_test = X[train_test_split:max_idx]
 
@@ -72,7 +64,7 @@ features = [
    "rmse_mean",
    "rmse_var",
 
-#    # spectral
+#   # spectral
    "spectral_centroid_mean",
    "spectral_centroid_var",
    "spectral_bandwidth_mean",
@@ -152,5 +144,4 @@ train_30s, test_30s = data_to_array_30s(
 
 # train and test on this form
 # [[data_from_features], [GenreID], [Track ID]]
-
 cov_matrix_30s = np.cov(train_30s[0], rowvar=False)

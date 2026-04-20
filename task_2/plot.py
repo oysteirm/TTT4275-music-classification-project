@@ -22,41 +22,6 @@ metal_data = np.array(metal_data)
 disco_data = np.array(disco_data)
 classical_data = np.array(classical_data)
 
-"""
-# --- First plot: feature 0 vs feature 1 ---
-plt.figure()
-plt.scatter(pop_data[:,0], pop_data[:,1], color='red', label='Pop')
-plt.scatter(metal_data[:,0], metal_data[:,1], color='blue', label='Metal')
-plt.scatter(disco_data[:,0], disco_data[:,1], color='green', label='Disco')
-plt.scatter(classical_data[:,0], classical_data[:,1], color='purple', label='Classical')
-plt.xlabel(features[0])
-plt.ylabel(features[1])
-plt.grid(True)
-plt.legend()
-
-# --- Second plot: feature 0 vs feature 2 ---
-plt.figure()
-plt.scatter(pop_data[:,0], pop_data[:,2], color='red', label='Pop')
-plt.scatter(metal_data[:,0], metal_data[:,2], color='blue', label='Metal')
-plt.scatter(disco_data[:,0], disco_data[:,2], color='green', label='Disco')
-plt.scatter(classical_data[:,0], classical_data[:,2], color='purple', label='Classical')
-plt.xlabel(features[0])
-plt.ylabel(features[2])
-plt.grid(True)
-plt.legend()
-
-# --- Third plot: feature 0 vs feature 3 ---
-plt.figure()
-plt.scatter(pop_data[:,0], pop_data[:,3], color='red', label='Pop')
-plt.scatter(metal_data[:,0], metal_data[:,3], color='blue', label='Metal')
-plt.scatter(disco_data[:,0], disco_data[:,3], color='green', label='Disco')
-plt.scatter(classical_data[:,0], classical_data[:,3], color='purple', label='Classical')
-plt.xlabel(features[0])
-plt.ylabel(features[3])
-plt.grid(True)
-plt.legend()
-"""
-
 a = 0.4
 bins = 12
 
