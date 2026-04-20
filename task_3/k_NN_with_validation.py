@@ -1,5 +1,8 @@
 import numpy as np
 from collections import Counter
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
 
 from file_to_array import (
     data_to_array_30s,
@@ -8,11 +11,6 @@ from file_to_array import (
     train_30s,
     cov_matrix_30s,
     test_30s,
-)
-from k_NN import(
-    evaluating_k_NN_classifier,
-    plot_confusion_matrix
-    
 )
 
 
@@ -98,12 +96,7 @@ def get_X_y(dataset):
 
 
 def load_data(features):
-    train_set, test_set = data_to_array_30s(
-        FILE_PATH,
-        features,
-        label_col="GenreID",
-        include_track_id=True,
-    )
+    train_set, test_set = data_to_array_30s(FILE_PATH, features, "GenreID", True)
 
     train_set, val_set = split_train_into_train_validation(train_set)
 
@@ -152,13 +145,10 @@ for triple in TRIPLE_SETS:
     for feature_4 in ALL_FEATURES:
         if feature_4 in triple:
             continue
-
         features = triple + [feature_4]
-
         train_set, val_set, cov = load_data(features)
         acc = compute_accuracy(train_set, val_set, cov, K)
         results.append((features, acc))
-        print(f"Done: {features} -> {acc:.4f}")
 
 results.sort(key=lambda x: x[1], reverse=True)
 
@@ -166,10 +156,38 @@ print("\n----TOP 10 FEATURE COMBINATIONS---\n")
 for i, (features, acc) in enumerate(results[:10], 1):
     print(f"{i}. {features} -> {acc:.4f}")
 
-
 best_features = results[0][0]
-
 print("\nBest features:", best_features)
+
+#Mark that the two following functions are inspired by code in notebook Problem Set 2 Solutions in TTT4275, provided via course webpage
+def evaluating_k_NN_classifier(train_set, test_set, cov_m, k):
+     predicted_genre = k_NN(train_set, test_set, cov_m, k)
+     true_genre = np.array(test_set[1])
+     error_rate = np.mean(true_genre != predicted_genre)
+
+     labels = sorted(np.unique(true_genre))
+
+     cm = confusion_matrix(true_genre, predicted_genre, labels=labels)
+
+     return error_rate, cm, labels, predicted_genre
+
+def plot_confusion_matrix(cm, labels, title):
+    """
+    Plots the confusion matrix as a heatmap
+    """
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(
+        cm,
+        annot=True,
+        fmt="d",
+        cmap="Blues",
+        xticklabels=labels,
+        yticklabels=labels
+    )
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.title(title)
+    plt.show()
 
 error_rate, cm, labels, predictions = evaluating_k_NN_classifier(train_30s, test_30s, cov_matrix_30s, K)
 
@@ -179,25 +197,3 @@ print("Error rate:", error_rate)
 print("Accuracy:", accuracy)
 print("Confusion matrix:\n", cm)
 plot_confusion_matrix(cm, labels, f"Confusion Matrix for k-NN (k={K})")
-
-#Functionality for testing on the splitted train set, without the validation set
-# train_and_val_set, test_set = data_to_array_30s(
-#     FILE_PATH,
-#     best_features,
-#     label_col="GenreID",
-#     include_track_id=True,
-# )
-
-# train_set, val_set = split_train_into_train_validation(train_and_val_set)
-# X_train, _ = get_X_y(train_set)
-
-# cov = np.cov(X_train, rowvar=False)
-# if np.ndim(cov) == 0:
-#     cov = np.array([[cov]])
-# cov += 1e-8 * np.eye(cov.shape[0])
-
-# test_acc = compute_accuracy(train_set, test_set, cov, K)
-
-# print("\n===== FINAL TEST RESULT =====")
-# print("Accuracy:", test_acc)
-

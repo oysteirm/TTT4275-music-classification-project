@@ -62,88 +62,6 @@ def data_to_array_30s(file_path, feature_cols, label_col=None, include_track_id=
     return tuple(outputs_train), tuple(outputs_test)
 
 
-def data_to_array_10s(file_path, feature_cols, label_col=None, include_track_id=False):
-    df = pd.read_csv(file_path, sep="\t")
-
-    # Features
-    X = df[feature_cols].values
-    # Optional outputs
-    y = df[label_col].values if label_col else None
-    track_id = df["Track ID"].values if include_track_id else None
-
-    train_test_split = 792*3
-    max_idx = len(X)
-
-    # split and standarize
-    X_train = X[:train_test_split]
-    X_test = X[train_test_split:max_idx]
-
-    mean = X_train.mean(axis=0)
-    std = X_train.std(axis=0)
-    std[std == 0] = 1
-
-    X_train = (X_train - mean) / std
-    X_test  = (X_test  - mean) / std
-
-    outputs_train = [X_train]
-    outputs_test = [X_test]
-
-    if y is not None:
-        y_train = y[:train_test_split]
-        y_test = y[train_test_split:max_idx]
-        outputs_train.append(y_train)
-        outputs_test.append(y_test)
-
-    if track_id is not None:
-        id_train = track_id[:train_test_split]
-        id_test = track_id[train_test_split:max_idx]
-        outputs_train.append(id_train)
-        outputs_test.append(id_test)
-
-    return tuple(outputs_train), tuple(outputs_test)
-
-
-def data_to_array_5s(file_path, feature_cols, label_col=None, include_track_id=False):
-
-    df = pd.read_csv(file_path, sep="\t")
-
-    # Features
-    X = df[feature_cols].values
-    # Optional outputs
-    y = df[label_col].values if label_col else None
-    track_id = df["Track ID"].values if include_track_id else None
-
-    train_test_split = 792*6
-    max_idx = len(X)
-
-    # split and standarize
-    X_train = X[:train_test_split]
-    X_test = X[train_test_split:max_idx]
-
-    mean = X_train.mean(axis=0)
-    std = X_train.std(axis=0)
-    std[std == 0] = 1
-
-    X_train = (X_train - mean) / std
-    X_test  = (X_test  - mean) / std
-
-    outputs_train = [X_train]
-    outputs_test = [X_test]
-
-    if y is not None:
-        y_train = y[:train_test_split]
-        y_test = y[train_test_split:max_idx]
-        outputs_train.append(y_train)
-        outputs_test.append(y_test)
-
-    if track_id is not None:
-        id_train = track_id[:train_test_split]
-        id_test = track_id[train_test_split:max_idx]
-        outputs_train.append(id_train)
-        outputs_test.append(id_test)
-
-    return tuple(outputs_train), tuple(outputs_test)
-
 def split_train_into_train_validation(data, val_ratio=0.25):
     X, y, track_ids = data
 
@@ -264,26 +182,9 @@ train_30s, test_30s = data_to_array_30s(
 # train and test on this form
 # [[data_from_features], [GenreID], [Track ID]]
 
-train_10s, test_10s = data_to_array_10s(
-    "../data/GenreClassData_10s.txt",
-    features, 
-    label_col="GenreID",
-    include_track_id=True
-)
-
-train_5s, test_5s = data_to_array_5s(
-    "../data/GenreClassData_5s.txt",
-    features, 
-    label_col="GenreID",
-    include_track_id=True
-)
 
 cov_matrix_30s = np.cov(train_30s[0], rowvar=False)
-cov_matrix_10s = np.cov(train_10s[0], rowvar=False)
-cov_matrix_5s = np.cov(train_5s[0], rowvar=False)
 
 #train_30s, validation_30s = split_train_into_train_validation(train_30s)
-train_10s, validation_10s = split_train_into_train_validation(train_10s)
-train_5s, validation_5s = split_train_into_train_validation(train_5s)
 
         
