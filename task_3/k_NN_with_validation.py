@@ -5,8 +5,15 @@ from file_to_array import (
     data_to_array_30s,
     split_train_into_train_validation,
     mahalanobis_distance,
+    train_30s,
+    cov_matrix_30s,
+    test_30s,
 )
-
+from k_NN import(
+    evaluating_k_NN_classifier,
+    plot_confusion_matrix
+    
+)
 
 
 FILE_PATH = "../data/GenreClassData_30s.txt"
@@ -106,7 +113,7 @@ def load_data(features):
 
     if np.ndim(cov) == 0:
         cov = np.array([[cov]])
-
+    # to avoid singularity issues
     cov = cov + 1e-8 * np.eye(cov.shape[0])
 
     return train_set, val_set, cov
@@ -155,7 +162,7 @@ for triple in TRIPLE_SETS:
 
 results.sort(key=lambda x: x[1], reverse=True)
 
-print("\n===== TOP 10 FEATURE COMBINATIONS =====\n")
+print("\n----TOP 10 FEATURE COMBINATIONS---\n")
 for i, (features, acc) in enumerate(results[:10], 1):
     print(f"{i}. {features} -> {acc:.4f}")
 
@@ -164,23 +171,33 @@ best_features = results[0][0]
 
 print("\nBest features:", best_features)
 
+error_rate, cm, labels, predictions = evaluating_k_NN_classifier(train_30s, test_30s, cov_matrix_30s, K)
 
-train_and_val_set, test_set = data_to_array_30s(
-    FILE_PATH,
-    best_features,
-    label_col="GenreID",
-    include_track_id=True,
-)
+accuracy = 1 - error_rate
 
-train_set, val_set = split_train_into_train_validation(train_and_val_set)
-X_train, _ = get_X_y(train_set)
+print("Error rate:", error_rate)
+print("Accuracy:", accuracy)
+print("Confusion matrix:\n", cm)
+plot_confusion_matrix(cm, labels, f"Confusion Matrix for k-NN (k={K})")
 
-cov = np.cov(X_train, rowvar=False)
-if np.ndim(cov) == 0:
-    cov = np.array([[cov]])
-cov += 1e-8 * np.eye(cov.shape[0])
+#Functionality for testing on the splitted train set, without the validation set
+# train_and_val_set, test_set = data_to_array_30s(
+#     FILE_PATH,
+#     best_features,
+#     label_col="GenreID",
+#     include_track_id=True,
+# )
 
-test_acc = compute_accuracy(train_set, test_set, cov, K)
+# train_set, val_set = split_train_into_train_validation(train_and_val_set)
+# X_train, _ = get_X_y(train_set)
 
-print("\n===== FINAL TEST RESULT =====")
-print("Accuracy:", test_acc)
+# cov = np.cov(X_train, rowvar=False)
+# if np.ndim(cov) == 0:
+#     cov = np.array([[cov]])
+# cov += 1e-8 * np.eye(cov.shape[0])
+
+# test_acc = compute_accuracy(train_set, test_set, cov, K)
+
+# print("\n===== FINAL TEST RESULT =====")
+# print("Accuracy:", test_acc)
+

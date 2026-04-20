@@ -282,7 +282,7 @@ cov_matrix_30s = np.cov(train_30s[0], rowvar=False)
 cov_matrix_10s = np.cov(train_10s[0], rowvar=False)
 cov_matrix_5s = np.cov(train_5s[0], rowvar=False)
 
-train_30s, validation_30s = split_train_into_train_validation(train_30s)
+#train_30s, validation_30s = split_train_into_train_validation(train_30s)
 train_10s, validation_10s = split_train_into_train_validation(train_10s)
 train_5s, validation_5s = split_train_into_train_validation(train_5s)
 

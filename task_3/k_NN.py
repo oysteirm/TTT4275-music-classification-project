@@ -8,7 +8,7 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
-from file_to_array import train_30s, validation_30s, test_30s, mahalanobis_distance, cov_matrix_30s
+from file_to_array import train_30s, test_30s, mahalanobis_distance, cov_matrix_30s
 
 def k_NN_classifier(train_set,test_set,cov_m,k):
     
@@ -79,7 +79,6 @@ accuracy = 1 - error_rate
 
 print("Error rate:", error_rate)
 print("Accuracy:", accuracy)
-print("Labels:", labels)
 print("Confusion matrix:\n", cm)
 plot_confusion_matrix(cm, labels, f"Confusion Matrix for k-NN (k={k})")
 
