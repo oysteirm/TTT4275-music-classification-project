@@ -4,7 +4,7 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
-from file_to_array import train_30s, test_30s, mahalanobis_distance, cov_matrix_30s, data_to_array_30s, features
+from file_to_array import train_30s, test_30s, mahalanobis_distance, cov_matrix_30s, data_to_array_30s
 
 def k_NN_classifier(train_set,test_set,cov_m,k):
     
@@ -17,12 +17,10 @@ def k_NN_classifier(train_set,test_set,cov_m,k):
         for j in range(len(train_set[0])):
             train_features = train_set[0][j]
             train_label = train_set[1][j]
-
-            #Calculating the mahalanobis distance   
+   
             distance = mahalanobis_distance(test_features, train_features, cov_m)
             distances.append((distance, train_label))
         
-        #sorting based on distance
         distances.sort(key=lambda x: x[0])
         k_nearest = distances[:k]
 
@@ -48,7 +46,7 @@ def evaluating_k_NN_classifier(train_set, test_set, cov_m, k):
 
      return error_rate, cm, labels, predicted_genre
 
-#
+
 def plot_confusion_matrix(cm, labels, title):
     """
     Plots the confusion matrix as a heatmap

@@ -1,2 +1,0 @@
-best_dataset_combo,best_k,best_n_features,best_features,best_accuracy,distance_metric
-30s,21,6,"spectral_rolloff_mean, rmse_var, mfcc_1_mean, spectral_centroid_var, mfcc_8_mean, mfcc_12_mean",0.6111111111111112,mahalanobis
