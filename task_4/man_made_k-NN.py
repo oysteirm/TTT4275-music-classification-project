@@ -3,6 +3,10 @@ from itertools import combinations, product
 from pathlib import Path
 import math
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
@@ -18,9 +22,9 @@ DATA_FILES = {
 DATASET_CACHE = {}
 
 K_VALUES_PER_SOURCE = {
-    "5s": [5, 10, 15],
-    "10s": [5, 10, 15],
-    "30s": [5, 10, 15],
+    "5s": [5, 7, 10, 12, 15, 17],
+    "10s": [5, 7, 10, 12, 15, 17],
+    "30s": [3, 5, 7, 10, 12, 15],
 }
 
 SOURCE_COMBINATIONS = [
@@ -29,7 +33,8 @@ SOURCE_COMBINATIONS = [
 
 WEIGHT_CONFIGS = [
     {"5s": 1, "10s": 1, "30s": 1},
-    {"5s": 1, "10s": 2, "30s": 3}
+    {"5s": 1, "10s": 2, "30s": 3},
+    {"5s": 1, "10s": 3, "30s": 6},
 ]
 
 ALL_FEATURES = [
@@ -130,45 +135,45 @@ RANKED_FEATURES = [
     "chroma_stft_1_std", #30      : 0.181818  0.818182
     "mfcc_2_std", #31             : 0.181818  0.818182
     "chroma_stft_4_mean", #32     : 0.176768  0.823232
-    # "mfcc_7_std", #33             : 0.176768  0.823232
-    # "mfcc_3_std", #34             : 0.176768  0.823232
-    # "mfcc_6_mean", #35            : 0.166667  0.833333
-    # "chroma_stft_12_std", #36     : 0.166667  0.833333
-    # "zero_cross_rate_mean", #37   : 0.166667  0.833333
-    # "chroma_stft_10_std", #38     : 0.166667  0.833333
-    # "chroma_stft_9_mean", #39     : 0.166667  0.833333
-    # "chroma_stft_11_std", #40     : 0.161616  0.838384
-    # "chroma_stft_1_mean", #41     : 0.161616  0.838384
-    # "chroma_stft_5_mean", #42     : 0.161616  0.838384
-    # "chroma_stft_11_mean", #43    : 0.161616  0.838384
-    # "spectral_bandwidth_var", #44 : 0.156566  0.843434
-    # "spectral_rolloff_var", #45   : 0.156566  0.843434
-    # "mfcc_4_std", #46             : 0.156566  0.843434
-    # "chroma_stft_6_mean", #47     : 0.156566  0.843434
-    # "chroma_stft_7_mean", #48     : 0.151515  0.848485
-    # "mfcc_6_std", #49             : 0.151515  0.848485
-    # "chroma_stft_8_mean", #50     : 0.151515  0.848485
-    # "mfcc_3_mean", #51            : 0.151515  0.848485
-    # "chroma_stft_4_std", #52      : 0.146465  0.853535
-    # "mfcc_11_mean", #53           : 0.141414  0.858586
-    # "mfcc_9_std", #54             : 0.141414  0.858586
-    # "chroma_stft_6_std", #55      : 0.141414  0.858586
-    # "chroma_stft_10_mean", #56    : 0.136364  0.863636
-    # "mfcc_7_mean", #57            : 0.136364  0.863636
-    # "mfcc_10_std", #58            : 0.136364  0.863636
-    # "chroma_stft_8_std", #59      : 0.136364  0.863636
-    # "chroma_stft_3_std", #60      : 0.126263  0.873737
-    # "chroma_stft_3_mean", #61     : 0.121212  0.878788
-    # "chroma_stft_7_std", #62      : 0.106061  0.893939
-    # "tempo", #63                  : 0.085859  0.914141
+    "mfcc_7_std", #33             : 0.176768  0.823232
+    "mfcc_3_std", #34             : 0.176768  0.823232
+    "mfcc_6_mean", #35            : 0.166667  0.833333
+    "chroma_stft_12_std", #36     : 0.166667  0.833333
+    "zero_cross_rate_mean", #37   : 0.166667  0.833333
+    "chroma_stft_10_std", #38     : 0.166667  0.833333
+    "chroma_stft_9_mean", #39     : 0.166667  0.833333
+    "chroma_stft_11_std", #40     : 0.161616  0.838384
+    "chroma_stft_1_mean", #41     : 0.161616  0.838384
+    "chroma_stft_5_mean", #42     : 0.161616  0.838384
+    "chroma_stft_11_mean", #43    : 0.161616  0.838384
+    "spectral_bandwidth_var", #44 : 0.156566  0.843434
+    "spectral_rolloff_var", #45   : 0.156566  0.843434
+    "mfcc_4_std", #46             : 0.156566  0.843434
+    "chroma_stft_6_mean", #47     : 0.156566  0.843434
+    "chroma_stft_7_mean", #48     : 0.151515  0.848485
+    "mfcc_6_std", #49             : 0.151515  0.848485
+    "chroma_stft_8_mean", #50     : 0.151515  0.848485
+    "mfcc_3_mean", #51            : 0.151515  0.848485
+    "chroma_stft_4_std", #52      : 0.146465  0.853535
+    "mfcc_11_mean", #53           : 0.141414  0.858586
+    "mfcc_9_std", #54             : 0.141414  0.858586
+    "chroma_stft_6_std", #55      : 0.141414  0.858586
+    "chroma_stft_10_mean", #56    : 0.136364  0.863636
+    "mfcc_7_mean", #57            : 0.136364  0.863636
+    "mfcc_10_std", #58            : 0.136364  0.863636
+    "chroma_stft_8_std", #59      : 0.136364  0.863636
+    "chroma_stft_3_std", #60      : 0.126263  0.873737
+    "chroma_stft_3_mean", #61     : 0.121212  0.878788
+    "chroma_stft_7_std", #62      : 0.106061  0.893939
+    "tempo", #63                  : 0.085859  0.914141
 ]
 
 #features to search in
 FEATURE_POOL = RANKED_FEATURES
 
 # feature set sizing 
-MIN_FEATURES = 31
-MAX_FEATURES = 32
+MIN_FEATURES = 63
+MAX_FEATURES = 63
 
 # Max number of feature sets to test on
 MAX_NUMBER_OF_FEATURE_SETS = 500
@@ -489,6 +494,24 @@ def generate_k_configs_for_sources(sources, k_values_per_source):
 
     return k_configs
 
+def plot_confusion_matrix(cm, labels, title):
+    """
+    Plots the confusion matrix as a heatmap
+    """
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(
+        cm,
+        annot=True,
+        fmt="d",
+        cmap="Blues",
+        xticklabels=labels,
+        yticklabels=labels
+    )
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.title(title)
+    plt.show()
+
 #main
 train_ids, validation_ids, test_ids = get_all_splits()
 print("Data information:")
@@ -560,6 +583,7 @@ best_test_segment_df, best_test_track_df, best_test_acc = evaluate_best_setup_on
 
 cm_df = make_confusion_matrix_df(best_test_track_df)
 
+
 print("End result TEST:")
 print(f"Feature set: {best_feature_cols}\n"
 f"Sources: {'+'.join(best_sources)}\n"
@@ -568,3 +592,15 @@ f"Method: {best_method}\n"
 f"Weights: {best_weights_str}\n"
 f"Test accuracy: {best_test_acc}\n"
 f"Number of features: {len(best_feature_cols)}")
+
+
+# Extract numpy array and labels
+cm = cm_df.values
+labels = [label.replace("true_", "") for label in cm_df.index]
+
+# Plot
+plot_confusion_matrix(
+    cm,
+    labels,
+    title="Confusion Matrix (Best Model on Test Set)"
+)
